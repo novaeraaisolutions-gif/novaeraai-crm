@@ -170,6 +170,29 @@ export const useSendProposal = () => {
   });
 };
 
+export const useAutoExpireProposals = () => {
+  const supabase = createClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("proposals")
+        .update({ status: "expirada" })
+        .lt("valid_until", today)
+        .in("status", ["rascunho", "enviada", "visualizada"])
+        .select("id");
+      if (error) throw error;
+      return data ?? [];
+    },
+    onSuccess: (updated) => {
+      if (updated.length > 0) {
+        qc.invalidateQueries({ queryKey: ["proposals"] });
+      }
+    },
+  });
+};
+
 export const useUpdateProposalItems = () => {
   const supabase = createClient();
   const qc = useQueryClient();

@@ -85,7 +85,7 @@ export default function DashboardPage() {
   const totalExpenses = expenses.reduce((s, r) => s + r.value, 0);
   const balance = totalRevenues - totalExpenses;
 
-  const activeLeads = leads.filter((l) => !("archived" in l && l.archived));
+  const activeLeads = leads.filter((l) => !l.archived);
   const hotLeads = activeLeads.filter((l) => l.temperature === "quente");
   const pendingTasks = tasks.filter((t) => t.status === "pendente");
   const overdueTasks = tasks.filter((t) => {

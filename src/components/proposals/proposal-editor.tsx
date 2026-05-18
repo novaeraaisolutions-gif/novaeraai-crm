@@ -110,13 +110,13 @@ export function ProposalEditor({ proposal }: Props) {
       reset({
         number: proposal.number,
         business_unit: proposal.business_unit,
-        lead_id: proposal.lead_id ?? "",
+        lead_id: proposal.lead_id ?? "__none__",
         company_name: proposal.company?.name ?? "",
         contact_name: proposal.contact?.full_name ?? "",
         discount: proposal.discount?.toString() ?? "",
         valid_until: proposal.valid_until ? proposal.valid_until.split("T")[0] : "",
         conditions: proposal.conditions ?? "",
-        template: proposal.template ?? "",
+        template: proposal.template ?? "__none__",
       });
       setGlobalDiscount(proposal.discount ?? 0);
       if (proposal.items && proposal.items.length > 0) {
@@ -139,22 +139,26 @@ export function ProposalEditor({ proposal }: Props) {
     }
   }, [proposal, reset, setValue]);
 
-  // When lead is selected, auto-fill
+  // When lead is selected, auto-fill (skip auto-fill on initial edit load to preserve proposal data)
   useEffect(() => {
-    if (!leadIdValue) {
+    if (!leadIdValue || leadIdValue === "__none__") {
       setSelectedLead(null);
       return;
     }
     const lead = leads.find((l) => l.id === leadIdValue);
     if (lead) {
       setSelectedLead(lead);
-      setValue("company_name", lead.company?.name ?? "");
-      setValue("contact_name", lead.contact?.full_name ?? "");
-      if (lead.business_unit) {
-        setValue("business_unit", lead.business_unit);
+      // Only auto-fill business_unit/company/contact when CREATING a new proposal,
+      // otherwise we'd overwrite the proposal's own data on every edit re-render
+      if (!proposal) {
+        setValue("company_name", lead.company?.name ?? "");
+        setValue("contact_name", lead.contact?.full_name ?? "");
+        if (lead.business_unit) {
+          setValue("business_unit", lead.business_unit);
+        }
       }
     }
-  }, [leadIdValue, leads, setValue]);
+  }, [leadIdValue, leads, setValue, proposal]);
 
   const addItem = () => {
     setItems([
@@ -195,19 +199,29 @@ export function ProposalEditor({ proposal }: Props) {
 
   const total = subtotal * (1 - globalDiscount / 100);
 
-  const buildPayload = (status: Proposal["status"]) => ({
-    number: watch("number"),
-    business_unit: watch("business_unit") as Proposal["business_unit"],
-    lead_id: selectedLead?.id ?? null,
-    company_id: selectedLead?.company_id ?? null,
-    contact_id: selectedLead?.contact_id ?? null,
-    discount: globalDiscount || null,
-    valid_until: watch("valid_until") || null,
-    status,
-    conditions: watch("conditions") || null,
-    template: watch("template") || null,
-    total,
-  });
+  const buildPayload = (status: Proposal["status"]) => {
+    const businessUnitValue = watch("business_unit");
+    const validBU = (["labs", "advisory", "enterprise"] as const).includes(
+      businessUnitValue as "labs" | "advisory" | "enterprise"
+    )
+      ? (businessUnitValue as Proposal["business_unit"])
+      : "labs";
+    const templateValue = watch("template");
+    return {
+      number: watch("number"),
+      business_unit: validBU,
+      // Preserve existing IDs from the proposal when no lead is currently selected
+      lead_id: selectedLead?.id ?? proposal?.lead_id ?? null,
+      company_id: selectedLead?.company_id ?? proposal?.company_id ?? null,
+      contact_id: selectedLead?.contact_id ?? proposal?.contact_id ?? null,
+      discount: globalDiscount || null,
+      valid_until: watch("valid_until") || null,
+      status,
+      conditions: watch("conditions") || null,
+      template: templateValue && templateValue !== "__none__" ? templateValue : null,
+      total,
+    };
+  };
 
   const buildLineItems = () =>
     items

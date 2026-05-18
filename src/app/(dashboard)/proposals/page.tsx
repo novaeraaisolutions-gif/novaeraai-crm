@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Search, FileText, Building2, Eye, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -34,7 +34,7 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
-import { useProposals, useDeleteProposal, type ProposalWithRelations } from "@/lib/hooks/use-proposals";
+import { useProposals, useDeleteProposal, useAutoExpireProposals, type ProposalWithRelations } from "@/lib/hooks/use-proposals";
 import { BUSINESS_UNITS } from "@/lib/utils/constants";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -60,7 +60,7 @@ const MONTHS = [
 export default function ProposalsPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("active");
   const [filterFrente, setFilterFrente] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
@@ -68,6 +68,13 @@ export default function ProposalsPage() {
 
   const { data: proposals = [], isLoading } = useProposals();
   const deleteProposal = useDeleteProposal();
+  const autoExpire = useAutoExpireProposals();
+
+  // Auto-expire proposals whose validity has passed (best-effort, runs once on mount)
+  useEffect(() => {
+    autoExpire.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDelete = async () => {
     if (!deletingProposal) return;
@@ -110,7 +117,20 @@ export default function ProposalsPage() {
         const matchesCompany = p.company?.name.toLowerCase().includes(q) ?? false;
         if (!matchesNumber && !matchesCompany) return false;
       }
-      if (filterStatus !== "all" && p.status !== filterStatus) return false;
+      if (filterStatus === "active") {
+        // Hide expired and (visually expired) proposals from the default view
+        if (p.status === "expirada") return false;
+        if (
+          p.valid_until &&
+          new Date(p.valid_until) < new Date() &&
+          p.status !== "aceita" &&
+          p.status !== "recusada"
+        ) {
+          return false;
+        }
+      } else if (filterStatus !== "all" && p.status !== filterStatus) {
+        return false;
+      }
       if (filterFrente !== "all" && p.business_unit !== filterFrente) return false;
       if (filterMonth !== "all") {
         const month = new Date(p.created_at).getMonth().toString();
@@ -179,6 +199,7 @@ export default function ProposalsPage() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="active">Ativas (sem expiradas)</SelectItem>
             <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="rascunho">Rascunho</SelectItem>
             <SelectItem value="enviada">Enviada</SelectItem>

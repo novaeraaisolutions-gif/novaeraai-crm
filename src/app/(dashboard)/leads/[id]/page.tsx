@@ -24,6 +24,8 @@ import {
   Download,
   Trash2,
   Upload,
+  FolderOpen,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -57,14 +59,19 @@ import {
   LEAD_ORIGINS,
   LOSS_REASONS,
   PROPOSAL_STATUSES,
+  PROJECT_STATUSES,
   TASK_PRIORITIES,
   BUSINESS_UNITS,
 } from "@/lib/utils/constants";
+
+const getProjectStatusMeta = (v: string) =>
+  PROJECT_STATUSES.find((s) => s.value === v) ?? { label: v, color: "#94A3B8" };
 import { useLead, useUpdateLead, useDeleteLead, useMoveLead } from "@/lib/hooks/use-leads";
 import { usePipeline } from "@/lib/hooks/use-pipelines";
 import { useActivities, useAddActivity } from "@/lib/hooks/use-activities";
 import { useLeadTasks, useUpdateTask } from "@/lib/hooks/use-tasks";
 import { useProposals } from "@/lib/hooks/use-proposals";
+import { useProjects } from "@/lib/hooks/use-projects";
 import { useContact } from "@/lib/hooks/use-contacts";
 import { useCompany } from "@/lib/hooks/use-companies";
 import { useUser } from "@/lib/hooks/use-user";
@@ -132,6 +139,9 @@ export default function LeadDetailPage() {
   const { data: contact } = useContact(lead?.contact_id ?? "");
   const { data: company } = useCompany(lead?.company_id ?? "");
   const { data: documents = [] } = useDocuments({ leadId: id });
+  const { data: projects = [], isLoading: projectsLoading } = useProjects({
+    companyId: lead?.company_id ?? "__no_company__",
+  });
 
   const updateLead = useUpdateLead();
   const deleteLead = useDeleteLead();
@@ -433,6 +443,10 @@ export default function LeadDetailPage() {
               <TabsTrigger value="documents">
                 <File size={14} className="mr-1.5" />
                 Documentos
+              </TabsTrigger>
+              <TabsTrigger value="projects">
+                <FolderOpen size={14} className="mr-1.5" />
+                Projetos
               </TabsTrigger>
               <TabsTrigger value="notes">
                 <Pencil size={14} className="mr-1.5" />
@@ -747,6 +761,95 @@ export default function LeadDetailPage() {
                   </div>
                 </div>
               )}
+            </TabsContent>
+
+            {/* ── Tab: Projetos ── */}
+            <TabsContent value="projects">
+              <div className="rounded-xl border border-border bg-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-text-primary">
+                    Projetos ({projects.length})
+                  </h3>
+                  {lead?.company_id && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push(`/companies/${lead.company_id}?tab=projects`)}
+                    >
+                      <ExternalLink size={13} className="mr-1.5" />
+                      Ver na empresa
+                    </Button>
+                  )}
+                </div>
+
+                {!lead?.company_id ? (
+                  <EmptyState
+                    icon={Building2}
+                    title="Sem empresa vinculada"
+                    description="Vincule este lead a uma empresa para visualizar os projetos."
+                  />
+                ) : projectsLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="h-16 rounded-lg bg-white/5 animate-pulse" />
+                    ))}
+                  </div>
+                ) : projects.length === 0 ? (
+                  <EmptyState
+                    icon={FolderOpen}
+                    title="Nenhum projeto"
+                    description="Nenhum projeto vinculado à empresa deste lead."
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {projects.map((project) => {
+                      const statusMeta = getProjectStatusMeta(project.status);
+                      return (
+                        <button
+                          key={project.id}
+                          onClick={() => router.push(`/projects/${project.id}`)}
+                          className="w-full p-4 rounded-lg border border-border hover:border-primary/30 hover:bg-white/5 transition-all text-left"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <p className="text-sm font-medium text-text-primary truncate">
+                                  {project.name}
+                                </p>
+                                <span
+                                  className="rounded-md px-2 py-0.5 text-xs font-medium flex-shrink-0"
+                                  style={{ background: `${statusMeta.color}20`, color: statusMeta.color }}
+                                >
+                                  {statusMeta.label}
+                                </span>
+                              </div>
+                              {project.program && (
+                                <p className="text-xs text-text-muted mb-2">{project.program}</p>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full transition-all"
+                                    style={{ width: `${project.progress}%`, background: statusMeta.color }}
+                                  />
+                                </div>
+                                <span className="text-xs text-text-muted flex-shrink-0 w-8 text-right">
+                                  {project.progress}%
+                                </span>
+                              </div>
+                            </div>
+                            {project.expected_end_date && (
+                              <p className="text-xs text-text-muted flex-shrink-0 mt-0.5">
+                                {formatDate(project.expected_end_date)}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             {/* ── Tab: Notas ── */}

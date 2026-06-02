@@ -259,6 +259,28 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["project_milestones"]["Insert"]>;
         Relationships: [];
       };
+      project_installments: {
+        Row: {
+          id: string;
+          org_id: string;
+          project_id: string;
+          position: number;
+          description: string;
+          percentage: number;
+          amount: number;
+          phase_id: string | null;
+          due_date: string | null;
+          status: "pendente" | "faturado" | "pago" | "atrasado" | "cancelado";
+          paid_at: string | null;
+          invoice_url: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["project_installments"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["project_installments"]["Insert"]>;
+        Relationships: [];
+      };
       documents: {
         Row: {
           id: string;

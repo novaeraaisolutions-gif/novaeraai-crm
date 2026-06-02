@@ -18,7 +18,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { useRevenues, useExpenses, useRevenuesLastMonths, useExpensesLastMonths, useDeleteRevenue, useDeleteExpense, useUpdateRevenue, useUpdateExpense, useCreateRevenue, useCreateExpense, type Revenue, type Expense } from "@/lib/hooks/use-finance";
+import { useAllInstallments, useMarkInstallmentPaid, INSTALLMENT_STATUS_META } from "@/lib/hooks/use-installments";
 import { useUser } from "@/lib/hooks/use-user";
+import Link from "next/link";
 
 const revenueStatusStyles: Record<string, string> = {
   pendente: "bg-warning/10 text-warning",
@@ -82,6 +84,12 @@ export default function FinancePage() {
   const { data: expenses = [], isLoading: expLoading } = useExpenses(year, month);
   const { data: revenuesLastMonths = {} } = useRevenuesLastMonths(year, month, 6);
   const { data: expensesLastMonths = {} } = useExpensesLastMonths(year, month, 6);
+  const { data: installmentsPending = [], isLoading: installmentsLoading } = useAllInstallments([
+    "pendente",
+    "faturado",
+    "atrasado",
+  ]);
+  const markPaid = useMarkInstallmentPaid();
   const deleteRevenue = useDeleteRevenue();
   const deleteExpense = useDeleteExpense();
   const updateRevenue = useUpdateRevenue();
@@ -318,11 +326,92 @@ export default function FinancePage() {
       )}
 
       {/* Tables */}
-      <Tabs defaultValue="revenues">
+      <Tabs defaultValue="receivables">
         <TabsList>
+          <TabsTrigger value="receivables">Recebíveis ({installmentsPending.length})</TabsTrigger>
           <TabsTrigger value="revenues">Receitas ({revenues.length})</TabsTrigger>
           <TabsTrigger value="expenses">Despesas ({expenses.length})</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="receivables" className="mt-4">
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.12)" }}
+          >
+            {installmentsLoading ? (
+              <div className="p-8 text-center text-sm" style={{ color: "#7BA3C6" }}>Carregando...</div>
+            ) : installmentsPending.length === 0 ? (
+              <div className="p-8 text-center text-sm" style={{ color: "#3D5A78" }}>
+                Nenhuma parcela pendente. Configure parcelas em cada projeto na aba <b>Financeiro</b>.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow style={{ borderColor: "rgba(11,135,195,0.1)" }}>
+                    <TableHead style={{ color: "#7BA3C6" }}>Projeto</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Parcela</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Valor</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Vencimento</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Status</TableHead>
+                    <TableHead className="w-[120px]" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {installmentsPending.map((inst) => {
+                    const meta = INSTALLMENT_STATUS_META[inst.status];
+                    const overdue =
+                      inst.due_date && inst.status !== "pago" && new Date(inst.due_date) < new Date();
+                    return (
+                      <TableRow key={inst.id} style={{ borderColor: "rgba(11,135,195,0.06)" }}>
+                        <TableCell className="text-sm" style={{ color: "#E2EBF8" }}>
+                          {inst.project ? (
+                            <Link href={`/projects/${inst.project.id}?tab=financeiro`} className="hover:underline text-[#0B87C3]">
+                              {inst.project.name}
+                            </Link>
+                          ) : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm" style={{ color: "#E2EBF8" }}>
+                          {inst.description}
+                          <span className="ml-1 text-xs" style={{ color: "#7BA3C6" }}>({inst.percentage}%)</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm font-semibold text-green-400">{formatCurrency(Number(inst.amount))}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`text-sm ${overdue ? "text-red-400 font-medium" : ""}`} style={{ color: overdue ? undefined : "#7BA3C6" }}>
+                            {inst.due_date ? formatDate(inst.due_date) : "—"}
+                            {overdue && <span className="block text-[10px]">Atrasada</span>}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className="px-2 py-0.5 rounded-full text-xs font-medium"
+                            style={{ background: `${meta.color}20`, color: meta.color }}
+                          >
+                            {meta.label}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs text-green-400 hover:text-green-300"
+                              onClick={() => markPaid.mutate(inst.id)}
+                            >
+                              ✓ Pago
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="revenues" className="mt-4">
           <div className="flex justify-end mb-3">
             <Button size="sm" style={{ background: "var(--primary)" }} onClick={() => setCreateRevenueOpen(true)}><Plus size={14} className="mr-1" />Nova Receita</Button>

@@ -39,6 +39,7 @@ import { useProject, useToggleMilestone } from "@/lib/hooks/use-projects";
 import { useProjectTasks, useUpdateTask } from "@/lib/hooks/use-tasks";
 import { useActivities } from "@/lib/hooks/use-activities";
 import { useProjectRevenues, useUpdateRevenue } from "@/lib/hooks/use-finance";
+import { ProjectInstallments } from "@/components/projects/project-installments";
 import { useDocuments, useUploadDocument, useDeleteDocument, getDocumentSignedUrl, DOCUMENT_TYPES } from "@/lib/hooks/use-documents";
 import { useOrgUsers } from "@/lib/hooks/use-user";
 import { useUser } from "@/lib/hooks/use-user";
@@ -833,6 +834,16 @@ export default function ProjectDetailPage() {
         {/* ── Financeiro ── */}
         <TabsContent value="financeiro" className="mt-4">
           <div className="space-y-4">
+            {/* Installments (parcelas do contrato) */}
+            {user?.org_id && (
+              <ProjectInstallments
+                projectId={project.id}
+                orgId={user.org_id}
+                contractValue={contractValue}
+                phases={(project.phases ?? []).map((p) => ({ id: p.id, name: p.name }))}
+              />
+            )}
+
             {/* Summary */}
             {contractValue > 0 && (
               <div className="rounded-xl border border-border bg-card p-5">

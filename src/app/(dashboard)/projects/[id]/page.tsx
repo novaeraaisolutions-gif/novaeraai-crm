@@ -41,6 +41,7 @@ import { useActivities } from "@/lib/hooks/use-activities";
 import { useProjectRevenues, useUpdateRevenue } from "@/lib/hooks/use-finance";
 import { ProjectInstallments } from "@/components/projects/project-installments";
 import { ProjectProducts } from "@/components/projects/project-products";
+import { ProjectCosts } from "@/components/projects/project-costs";
 import { useDocuments, useUploadDocument, useDeleteDocument, getDocumentSignedUrl, DOCUMENT_TYPES } from "@/lib/hooks/use-documents";
 import { useOrgUsers } from "@/lib/hooks/use-user";
 import { useUser } from "@/lib/hooks/use-user";
@@ -848,6 +849,11 @@ export default function ProjectDetailPage() {
                 contractValue={contractValue}
                 phases={(project.phases ?? []).map((p) => ({ id: p.id, name: p.name }))}
               />
+            )}
+
+            {/* Costs */}
+            {user?.org_id && (
+              <ProjectCosts projectId={project.id} orgId={user.org_id} />
             )}
 
             {/* Summary */}

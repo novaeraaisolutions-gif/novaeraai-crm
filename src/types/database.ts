@@ -295,6 +295,26 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["project_product_stages"]["Insert"]>;
         Relationships: [];
       };
+      project_costs: {
+        Row: {
+          id: string;
+          org_id: string;
+          project_id: string;
+          product_id: string | null;
+          category: "pessoal" | "infraestrutura" | "software" | "terceiros" | "marketing" | "outros";
+          cost_type: "implementacao" | "mensal_recorrente" | "eventual";
+          description: string;
+          amount: number;
+          incurred_date: string | null;
+          status: "previsto" | "pago" | "cancelado";
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["project_costs"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["project_costs"]["Insert"]>;
+        Relationships: [];
+      };
       project_installments: {
         Row: {
           id: string;

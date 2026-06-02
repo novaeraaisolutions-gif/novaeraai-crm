@@ -42,6 +42,7 @@ import { useProjectRevenues, useUpdateRevenue } from "@/lib/hooks/use-finance";
 import { ProjectInstallments } from "@/components/projects/project-installments";
 import { ProjectProducts } from "@/components/projects/project-products";
 import { ProjectCosts } from "@/components/projects/project-costs";
+import { ProjectBilling } from "@/components/projects/project-billing";
 import { useDocuments, useUploadDocument, useDeleteDocument, getDocumentSignedUrl, DOCUMENT_TYPES } from "@/lib/hooks/use-documents";
 import { useOrgUsers } from "@/lib/hooks/use-user";
 import { useUser } from "@/lib/hooks/use-user";
@@ -841,6 +842,9 @@ export default function ProjectDetailPage() {
         {/* ── Financeiro ── */}
         <TabsContent value="financeiro" className="mt-4">
           <div className="space-y-4">
+            {/* Billing / contract */}
+            <ProjectBilling project={project} />
+
             {/* Installments (parcelas do contrato) */}
             {user?.org_id && (
               <ProjectInstallments

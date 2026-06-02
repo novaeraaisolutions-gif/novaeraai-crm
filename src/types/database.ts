@@ -223,6 +223,12 @@ export interface Database {
           progress: number;
           description: string | null;
           tags: string[];
+          billing_day: number | null;
+          billing_amount: number | null;
+          contract_start: string | null;
+          contract_end: string | null;
+          renewal_type: "auto" | "manual" | "no_renewal" | null;
+          billing_status: "sem_mensalidade" | "ativo" | "suspenso" | "encerrado" | null;
           created_at: string;
           updated_at: string;
           created_by: string | null;

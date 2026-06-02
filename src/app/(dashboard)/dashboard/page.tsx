@@ -3,9 +3,10 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import {
-  TrendingUp, TrendingDown, Users, Briefcase, FileText,
-  CheckSquare, DollarSign, Target, ArrowRight, Clock, AlertCircle
+  TrendingUp, TrendingDown, Briefcase, FileText,
+  CheckSquare, DollarSign, Target, ArrowRight, Clock, AlertCircle, CalendarClock
 } from "lucide-react";
+import { differenceInDays, parseISO } from "date-fns";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
@@ -93,6 +94,18 @@ export default function DashboardPage() {
     return new Date(t.due_date) < now;
   });
   const activeProjects = projects.filter((p) => p.status === "em_andamento");
+  const projectsWithContract = projects.filter(
+    (p) => p.contract_end && p.billing_status === "ativo"
+  );
+  const contractsExpired = projectsWithContract
+    .filter((p) => differenceInDays(parseISO(p.contract_end!), new Date()) < 0)
+    .sort((a, b) => parseISO(a.contract_end!).getTime() - parseISO(b.contract_end!).getTime());
+  const contractsExpiringSoon = projectsWithContract
+    .filter((p) => {
+      const d = differenceInDays(parseISO(p.contract_end!), new Date());
+      return d >= 0 && d <= 30;
+    })
+    .sort((a, b) => parseISO(a.contract_end!).getTime() - parseISO(b.contract_end!).getTime());
   const sentProposals = proposals.filter((p) => p.status === "enviada");
 
   // Lead pipeline data (last 6 months mock based on count)
@@ -201,8 +214,47 @@ export default function DashboardPage() {
         <StatCard label="Tarefas Pendentes" value={pendingTasks.length} sub={`${overdueTasks.length} atrasadas`} icon={CheckSquare} color={overdueTasks.length > 0 ? "#f59e0b" : "#0B87C3"} />
         <StatCard label="Despesas do Mês" value={formatCurrency(totalExpenses)} sub="mês atual" icon={TrendingDown} color="#ef4444" />
         <StatCard label="Receitas do Mês" value={formatCurrency(totalRevenues)} sub="mês atual" icon={TrendingUp} color="#22c55e" />
-        <StatCard label="Empresas/Contatos" value={`${leads.length}`} sub="leads no CRM" icon={Users} color="#7BA3C6" />
+        <StatCard
+          label="Contratos a vencer"
+          value={contractsExpiringSoon.length}
+          sub={contractsExpired.length > 0 ? `${contractsExpired.length} já vencidos` : "próximos 30 dias"}
+          icon={CalendarClock}
+          color={contractsExpired.length > 0 ? "#ef4444" : contractsExpiringSoon.length > 0 ? "#f59e0b" : "#0B87C3"}
+        />
       </div>
+
+      {/* Contracts alert section */}
+      {(contractsExpiringSoon.length > 0 || contractsExpired.length > 0) && (
+        <div className="rounded-xl border border-amber-200/30 bg-amber-50/5 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <CalendarClock size={16} className="text-amber-400" />
+            <h3 className="text-sm font-semibold text-amber-300">Contratos com prazo apertado</h3>
+          </div>
+          <div className="space-y-1.5">
+            {[...contractsExpired, ...contractsExpiringSoon].slice(0, 5).map((proj) => {
+              const days = differenceInDays(parseISO(proj.contract_end!), new Date());
+              return (
+                <Link
+                  key={proj.id}
+                  href={`/projects/${proj.id}?tab=financeiro`}
+                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-sm"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-text-primary truncate">{proj.name}</p>
+                    <p className="text-xs text-text-muted">
+                      {proj.billing_amount ? formatCurrency(Number(proj.billing_amount)) + "/mês • " : ""}
+                      Vence em {formatDate(proj.contract_end!)}
+                    </p>
+                  </div>
+                  <span className={`text-xs font-medium whitespace-nowrap ${days < 0 ? "text-red-400" : days <= 7 ? "text-red-400" : "text-amber-400"}`}>
+                    {days < 0 ? `Há ${Math.abs(days)} dias` : days === 0 ? "HOJE" : `Em ${days} dias`}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

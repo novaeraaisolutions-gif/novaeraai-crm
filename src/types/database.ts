@@ -259,6 +259,42 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["project_milestones"]["Insert"]>;
         Relationships: [];
       };
+      project_products: {
+        Row: {
+          id: string;
+          org_id: string;
+          project_id: string;
+          name: string;
+          description: string | null;
+          value: number | null;
+          position: number;
+          status: "planejado" | "em_andamento" | "concluido" | "cancelado";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["project_products"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["project_products"]["Insert"]>;
+        Relationships: [];
+      };
+      project_product_stages: {
+        Row: {
+          id: string;
+          org_id: string;
+          product_id: string;
+          name: string;
+          position: number;
+          status: "pendente" | "em_andamento" | "concluida" | "bloqueada";
+          promised_date: string | null;
+          forecast_date: string | null;
+          actual_end_date: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["project_product_stages"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["project_product_stages"]["Insert"]>;
+        Relationships: [];
+      };
       project_installments: {
         Row: {
           id: string;

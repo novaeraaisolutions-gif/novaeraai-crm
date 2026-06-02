@@ -40,6 +40,7 @@ import { useProjectTasks, useUpdateTask } from "@/lib/hooks/use-tasks";
 import { useActivities } from "@/lib/hooks/use-activities";
 import { useProjectRevenues, useUpdateRevenue } from "@/lib/hooks/use-finance";
 import { ProjectInstallments } from "@/components/projects/project-installments";
+import { ProjectProducts } from "@/components/projects/project-products";
 import { useDocuments, useUploadDocument, useDeleteDocument, getDocumentSignedUrl, DOCUMENT_TYPES } from "@/lib/hooks/use-documents";
 import { useOrgUsers } from "@/lib/hooks/use-user";
 import { useUser } from "@/lib/hooks/use-user";
@@ -387,10 +388,11 @@ export default function ProjectDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="overview">
         <TabsList className="bg-card border border-border rounded-xl p-1 h-auto flex flex-wrap gap-1">
-          {["overview", "kanban", "tarefas", "documentos", "financeiro", "timeline"].map((tab) => {
+          {["overview", "kanban", "produtos", "tarefas", "documentos", "financeiro", "timeline"].map((tab) => {
             const labels: Record<string, string> = {
               overview: "Overview",
               kanban: "Fases & Kanban",
+              produtos: "Produtos",
               tarefas: "Tarefas",
               documentos: "Documentos",
               financeiro: "Financeiro",
@@ -587,6 +589,10 @@ export default function ProjectDetailPage() {
         </TabsContent>
 
         {/* ── Tarefas ── */}
+        <TabsContent value="produtos" className="mt-4">
+          {user?.org_id && <ProjectProducts projectId={project.id} orgId={user.org_id} />}
+        </TabsContent>
+
         <TabsContent value="tarefas" className="mt-4">
           <div className="space-y-4">
             {/* Filter */}

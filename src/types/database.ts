@@ -301,6 +301,26 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["project_product_stages"]["Insert"]>;
         Relationships: [];
       };
+      project_improvements: {
+        Row: {
+          id: string;
+          org_id: string;
+          project_id: string;
+          product_id: string | null;
+          title: string;
+          description: string | null;
+          priority: "baixa" | "media" | "alta" | "urgente";
+          status: "sugerida" | "aprovada" | "em_desenvolvimento" | "entregue" | "rejeitada";
+          source: "interno" | "cliente" | null;
+          target_date: string | null;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["project_improvements"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["project_improvements"]["Insert"]>;
+        Relationships: [];
+      };
       project_costs: {
         Row: {
           id: string;

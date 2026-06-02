@@ -23,6 +23,8 @@ import { useLeads } from "@/lib/hooks/use-leads";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { useActivities } from "@/lib/hooks/use-activities";
 import { useCompanyRevenues } from "@/lib/hooks/use-finance";
+import { useUser } from "@/lib/hooks/use-user";
+import { UpsellList } from "@/components/upsells/upsell-list";
 import { CompanyForm } from "@/components/forms/company-form";
 import { ContactForm } from "@/components/forms/contact-form";
 import { LeadForm } from "@/components/forms/lead-form";
@@ -91,6 +93,7 @@ export default function CompanyDetailPage() {
   const [contactFormOpen, setContactFormOpen] = useState(false);
   const [leadFormOpen, setLeadFormOpen] = useState(false);
 
+  const { user } = useUser();
   const { data: company, isLoading, error } = useCompany(id);
   const { data: contacts, isLoading: contactsLoading } = useContacts(undefined, id);
   const { data: leads, isLoading: leadsLoading } = useLeads({ companyId: id });
@@ -276,6 +279,7 @@ export default function CompanyDetailPage() {
                     { value: "contacts", label: "Contatos" },
                     { value: "leads", label: "Leads" },
                     { value: "projects", label: "Projetos" },
+                    { value: "upsells", label: "Upsell" },
                     { value: "timeline", label: "Timeline" },
                   ] as const
                 ).map((tab) => (
@@ -586,6 +590,11 @@ export default function CompanyDetailPage() {
                   })}
                 </div>
               )}
+            </TabsContent>
+
+            {/* Upsell */}
+            <TabsContent value="upsells" className="p-6">
+              {user?.org_id && <UpsellList scope="company" companyId={id} orgId={user.org_id} />}
             </TabsContent>
 
             {/* Timeline */}

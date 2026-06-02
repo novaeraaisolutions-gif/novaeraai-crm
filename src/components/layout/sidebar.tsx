@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Target, Building2, FileText, Package,
   Rocket, FolderOpen, DollarSign, CheckSquare, Calendar, Settings,
-  ChevronLeft, ChevronRight, LogOut,
+  ChevronLeft, ChevronRight, LogOut, TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useSidebarStore } from "@/store/sidebar-store";
@@ -28,6 +28,7 @@ const NAV_GROUPS = [
       { icon: Target, label: "Leads & Contatos", href: "/leads" },
       { icon: Building2, label: "Empresas", href: "/companies" },
       { icon: FileText, label: "Propostas", href: "/proposals" },
+      { icon: TrendingUp, label: "Upsell", href: "/upsells" },
       { icon: Package, label: "Catálogo", href: "/catalog" },
     ],
   },

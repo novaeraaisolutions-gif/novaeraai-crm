@@ -44,6 +44,7 @@ import { ProjectProducts } from "@/components/projects/project-products";
 import { ProjectCosts } from "@/components/projects/project-costs";
 import { ProjectBilling } from "@/components/projects/project-billing";
 import { ProjectImprovements } from "@/components/projects/project-improvements";
+import { UpsellList } from "@/components/upsells/upsell-list";
 import { useDocuments, useUploadDocument, useDeleteDocument, getDocumentSignedUrl, DOCUMENT_TYPES } from "@/lib/hooks/use-documents";
 import { useOrgUsers } from "@/lib/hooks/use-user";
 import { useUser } from "@/lib/hooks/use-user";
@@ -391,12 +392,13 @@ export default function ProjectDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="overview">
         <TabsList className="bg-card border border-border rounded-xl p-1 h-auto flex flex-wrap gap-1">
-          {["overview", "kanban", "produtos", "melhorias", "tarefas", "documentos", "financeiro", "timeline"].map((tab) => {
+          {["overview", "kanban", "produtos", "melhorias", "upsell", "tarefas", "documentos", "financeiro", "timeline"].map((tab) => {
             const labels: Record<string, string> = {
               overview: "Overview",
               kanban: "Fases & Kanban",
               produtos: "Produtos",
               melhorias: "Melhorias",
+              upsell: "Upsell",
               tarefas: "Tarefas",
               documentos: "Documentos",
               financeiro: "Financeiro",
@@ -599,6 +601,12 @@ export default function ProjectDetailPage() {
 
         <TabsContent value="melhorias" className="mt-4">
           {user?.org_id && <ProjectImprovements projectId={project.id} orgId={user.org_id} />}
+        </TabsContent>
+
+        <TabsContent value="upsell" className="mt-4">
+          {user?.org_id && project.company_id && (
+            <UpsellList scope="project" companyId={project.company_id} projectId={project.id} orgId={user.org_id} />
+          )}
         </TabsContent>
 
         <TabsContent value="tarefas" className="mt-4">

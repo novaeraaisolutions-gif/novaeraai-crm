@@ -32,6 +32,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProjectForm } from "@/components/forms/project-form";
+import { ProjectsKanban } from "@/components/projects/projects-kanban";
 import { formatDate, formatInitials } from "@/lib/utils/format";
 import { PROJECT_STATUSES, PROGRAMS } from "@/lib/utils/constants";
 import {
@@ -124,7 +125,7 @@ const FRENTES = [
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const [view, setView] = useState<"por_cliente" | "todos">("por_cliente");
+  const [view, setView] = useState<"kanban" | "por_cliente" | "todos">("kanban");
   const [formOpen, setFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>();
   const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
@@ -142,16 +143,23 @@ export default function ProjectsPage() {
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
     const active = projects.filter((p) =>
-      ["kickoff", "em_andamento", "pausado", "em_revisao"].includes(p.status)
+      [
+        "contrato_assinado", "em_desenvolvimento", "em_validacao_interna",
+        "entregue_tet", "ativo_mensalidade",
+        // legacy
+        "kickoff", "em_andamento", "pausado", "em_revisao",
+      ].includes(p.status)
     ).length;
-    const emAndamento = projects.filter((p) => p.status === "em_andamento").length;
+    const emAndamento = projects.filter((p) =>
+      ["em_desenvolvimento", "em_andamento"].includes(p.status)
+    ).length;
     const concluidosMes = projects.filter((p) => {
-      if (p.status !== "concluido" || !p.end_date) return false;
+      if (!["ativo_mensalidade", "concluido"].includes(p.status) || !p.end_date) return false;
       const d = parseISO(p.end_date);
       return !isAfter(monthStart, d) && !isAfter(d, monthEnd);
     }).length;
     const aVencer = projects.filter((p) => {
-      if (!p.expected_end_date || ["concluido", "cancelado"].includes(p.status)) return false;
+      if (!p.expected_end_date || ["concluido", "cancelado", "churned"].includes(p.status)) return false;
       const diff = differenceInDays(parseISO(p.expected_end_date), now);
       return diff >= 0 && diff <= 7;
     }).length;
@@ -207,6 +215,15 @@ export default function ProjectsPage() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex rounded-lg overflow-hidden" style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}>
           <button
+            onClick={() => setView("kanban")}
+            className={cn(
+              "px-4 py-2 text-sm font-medium transition-colors",
+              view === "kanban" ? "bg-[#0B87C3] text-white" : "text-text-muted hover:bg-white/5"
+            )}
+          >
+            Kanban
+          </button>
+          <button
             onClick={() => setView("por_cliente")}
             className={cn(
               "px-4 py-2 text-sm font-medium transition-colors",
@@ -222,7 +239,7 @@ export default function ProjectsPage() {
               view === "todos" ? "bg-[#0B87C3] text-white" : "text-text-muted hover:bg-white/5"
             )}
           >
-            Todos
+            Lista
           </button>
         </div>
 
@@ -287,6 +304,8 @@ export default function ProjectsPage() {
           description="Ajuste os filtros ou crie um novo projeto."
           action={{ label: "Novo Projeto", onClick: () => setFormOpen(true) }}
         />
+      ) : view === "kanban" ? (
+        <ProjectsKanban projects={filtered} onCardClick={(p) => router.push(`/projects/${p.id}`)} orgUsers={orgUsers} />
       ) : view === "por_cliente" ? (
         <div className="space-y-3">
           {Array.from(grouped.entries()).map(([cid, { company, projects: cProjects }]) => {

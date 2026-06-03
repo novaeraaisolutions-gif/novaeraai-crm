@@ -22,11 +22,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { BUSINESS_UNITS, PROJECT_STATUSES } from "@/lib/utils/constants";
-import { useCreateProject, useUpdateProject } from "@/lib/hooks/use-projects";
+import { BUSINESS_UNITS, BUSINESS_UNIT_PREFIX, PROJECT_STATUSES } from "@/lib/utils/constants";
+import { useCreateProject, useUpdateProject, useProjects } from "@/lib/hooks/use-projects";
 import { useCompanies } from "@/lib/hooks/use-companies";
 import { useContacts } from "@/lib/hooks/use-contacts";
-import { useUser } from "@/lib/hooks/use-user";
+import { useUser, useOrgUsers } from "@/lib/hooks/use-user";
 import type { Project } from "@/lib/hooks/use-projects";
 
 const projectSchema = z.object({
@@ -39,8 +39,16 @@ const projectSchema = z.object({
   start_date: z.string().optional(),
   expected_end_date: z.string().optional(),
   contract_value: z.string().optional(),
+  billing_amount: z.string().optional(),
   description: z.string().optional(),
   tags: z.string().optional(),
+  // V2
+  niche: z.string().optional(),
+  primary_contact_name: z.string().optional(),
+  primary_contact_whatsapp: z.string().optional(),
+  closed_by_user_id: z.string().optional(),
+  closed_by_external_label: z.string().optional(),
+  developer_user_id: z.string().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -57,6 +65,8 @@ export const ProjectForm = ({ open, onClose, project }: ProjectFormProps) => {
   const updateProject = useUpdateProject();
   const { data: companies } = useCompanies();
   const { data: contacts } = useContacts();
+  const { data: orgUsers = [] } = useOrgUsers();
+  const { data: allProjects = [] } = useProjects();
 
   const {
     register,
@@ -86,13 +96,39 @@ export const ProjectForm = ({ open, onClose, project }: ProjectFormProps) => {
         start_date: project.start_date ?? "",
         expected_end_date: project.expected_end_date ?? "",
         contract_value: project.contract_value?.toString() ?? "",
+        billing_amount: project.billing_amount?.toString() ?? "",
         description: project.description ?? "",
         tags: project.tags?.join(", ") ?? "",
+        niche: project.niche ?? "",
+        primary_contact_name: project.primary_contact_name ?? "",
+        primary_contact_whatsapp: project.primary_contact_whatsapp ?? "",
+        closed_by_user_id: project.closed_by_user_id ?? "",
+        closed_by_external_label: project.closed_by_external_label ?? "",
+        developer_user_id: project.developer_user_id ?? "",
       });
     } else {
-      reset({ status: "kickoff" });
+      // V2: default status é "contrato_assinado" (início do pipeline)
+      reset({ status: "contrato_assinado", business_unit: "intelligence" });
     }
   }, [project, reset, open]);
+
+  // Auto-gera o código no padrão FRENTE-ANO-NNN ao mudar a frente (apenas em criação)
+  useEffect(() => {
+    if (project) return;
+    const bu = businessUnitValue;
+    if (!bu) return;
+    const prefix = BUSINESS_UNIT_PREFIX[bu] ?? "PRJ";
+    const year = new Date().getFullYear();
+    // Conta projetos existentes dessa frente neste ano
+    const existing = allProjects.filter((p) => {
+      const m = p.code?.match(/^([A-Z]+)-(\d{4})-(\d{3,})$/);
+      return m && m[1] === prefix && Number(m[2]) === year;
+    });
+    const seq = String(existing.length + 1).padStart(3, "0");
+    const code = `${prefix}-${year}-${seq}`;
+    setValue("code", code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessUnitValue, project, allProjects.length]);
 
   const onSubmit = async (values: ProjectFormValues) => {
     const tags = values.tags
@@ -109,9 +145,16 @@ export const ProjectForm = ({ open, onClose, project }: ProjectFormProps) => {
       start_date: values.start_date || null,
       expected_end_date: values.expected_end_date || null,
       contract_value: values.contract_value ? parseFloat(values.contract_value) : null,
+      billing_amount: values.billing_amount ? parseFloat(values.billing_amount) : null,
       description: values.description || null,
       tags,
       progress: project?.progress ?? 0,
+      niche: values.niche || null,
+      primary_contact_name: values.primary_contact_name || null,
+      primary_contact_whatsapp: values.primary_contact_whatsapp || null,
+      closed_by_user_id: values.closed_by_user_id || null,
+      closed_by_external_label: values.closed_by_external_label || null,
+      developer_user_id: values.developer_user_id || null,
     };
 
     if (project) {
@@ -217,15 +260,80 @@ export const ProjectForm = ({ open, onClose, project }: ProjectFormProps) => {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="contract_value">Valor de Implementação (R$)</Label>
+              <Input
+                id="contract_value"
+                type="number"
+                step="0.01"
+                {...register("contract_value")}
+                placeholder="0,00"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="billing_amount">Mensalidade (R$/mês)</Label>
+              <Input
+                id="billing_amount"
+                type="number"
+                step="0.01"
+                {...register("billing_amount")}
+                placeholder="0,00"
+              />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
-            <Label htmlFor="contract_value">Valor do Contrato (R$)</Label>
+            <Label htmlFor="niche">Nicho / Setor</Label>
             <Input
-              id="contract_value"
-              type="number"
-              step="0.01"
-              {...register("contract_value")}
-              placeholder="0,00"
+              id="niche"
+              {...register("niche")}
+              placeholder="Ex: Administração de Condomínios"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="primary_contact_name">Contato Principal</Label>
+              <Input id="primary_contact_name" {...register("primary_contact_name")} placeholder="Nome" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="primary_contact_whatsapp">WhatsApp do Contato</Label>
+              <Input id="primary_contact_whatsapp" {...register("primary_contact_whatsapp")} placeholder="(34) 9xxxx-xxxx" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Fechado por</Label>
+              <Select
+                value={watch("closed_by_user_id") || "__none__"}
+                onValueChange={(v) => setValue("closed_by_user_id", v === "__none__" ? "" : v)}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Externo / Indicação</SelectItem>
+                  {orgUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Desenvolvedor responsável</Label>
+              <Select
+                value={watch("developer_user_id") || "__none__"}
+                onValueChange={(v) => setValue("developer_user_id", v === "__none__" ? "" : v)}
+              >
+                <SelectTrigger><SelectValue placeholder="Sem dev alocado" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sem dev alocado</SelectItem>
+                  {orgUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-1.5">

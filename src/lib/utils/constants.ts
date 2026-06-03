@@ -1,7 +1,27 @@
 export const BUSINESS_UNITS = [
+  { value: "intelligence", label: "Nova Era Intelligence" },
   { value: "labs", label: "Nova Era Labs" },
   { value: "advisory", label: "Nova Era Advisory" },
   { value: "enterprise", label: "Nova Era Enterprise" },
+] as const;
+
+export const BUSINESS_UNIT_PREFIX: Record<string, string> = {
+  intelligence: "INT",
+  labs: "LAB",
+  advisory: "ADV",
+  enterprise: "ENT",
+};
+
+export const CONTRACT_PLANS = [
+  { value: "core", label: "Core" },
+  { value: "evolucao", label: "Evolução" },
+  { value: "parceiro", label: "Parceiro" },
+] as const;
+
+export const CHURN_RISK_OPTIONS = [
+  { value: "baixo", label: "Baixo", color: "#10B981" },
+  { value: "medio", label: "Médio", color: "#F59E0B" },
+  { value: "alto", label: "Alto", color: "#EF4444" },
 ] as const;
 
 export const TEMPERATURES = [
@@ -62,12 +82,32 @@ export const PROPOSAL_STATUSES = [
 ] as const;
 
 export const PROJECT_STATUSES = [
-  { value: "kickoff", label: "Kickoff", color: "#6366F1" },
-  { value: "em_andamento", label: "Em andamento", color: "#0B87C3" },
-  { value: "pausado", label: "Pausado", color: "#F59E0B" },
-  { value: "em_revisao", label: "Em revisão", color: "#F59E0B" },
-  { value: "concluido", label: "Concluído", color: "#10B981" },
-  { value: "cancelado", label: "Cancelado", color: "#EF4444" },
+  // Novo pipeline V2 (7 estágios)
+  { value: "contrato_assinado",     label: "Contrato Assinado",     color: "#6366F1" },
+  { value: "em_desenvolvimento",    label: "Em Desenvolvimento",    color: "#0B87C3" },
+  { value: "em_validacao_interna",  label: "Em Validação Interna",  color: "#8B5CF6" },
+  { value: "entregue_tet",          label: "Entregue (Período TET)", color: "#F59E0B" },
+  { value: "ativo_mensalidade",     label: "Ativo — Mensalidade",   color: "#10B981" },
+  { value: "upsell_identificado",   label: "Upsell Identificado",   color: "#EC4899" },
+  { value: "churned",               label: "Churned",                color: "#EF4444" },
+  // Legacy (mantém pra projetos antigos enquanto não migram)
+  { value: "kickoff",       label: "Kickoff (legado)",      color: "#94A3B8" },
+  { value: "em_andamento",  label: "Em andamento (legado)", color: "#94A3B8" },
+  { value: "pausado",       label: "Pausado (legado)",      color: "#94A3B8" },
+  { value: "em_revisao",    label: "Em revisão (legado)",   color: "#94A3B8" },
+  { value: "concluido",     label: "Concluído (legado)",    color: "#94A3B8" },
+  { value: "cancelado",     label: "Cancelado (legado)",    color: "#94A3B8" },
+] as const;
+
+// Apenas os estágios novos (V2), na ordem do pipeline — usados pelo Kanban
+export const PROJECT_PIPELINE_V2 = [
+  "contrato_assinado",
+  "em_desenvolvimento",
+  "em_validacao_interna",
+  "entregue_tet",
+  "ativo_mensalidade",
+  "upsell_identificado",
+  "churned",
 ] as const;
 
 export const REVENUE_STATUSES = [

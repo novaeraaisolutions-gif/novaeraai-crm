@@ -45,6 +45,10 @@ import { ProjectCosts } from "@/components/projects/project-costs";
 import { ProjectBilling } from "@/components/projects/project-billing";
 import { ProjectImprovements } from "@/components/projects/project-improvements";
 import { UpsellList } from "@/components/upsells/upsell-list";
+import { ProjectIdentification } from "@/components/projects/project-identification";
+import { ProjectDevelopment } from "@/components/projects/project-development";
+import { ProjectAftercare } from "@/components/projects/project-aftercare";
+import { ProjectFinancialSummary } from "@/components/projects/project-financial-summary";
 import { useDocuments, useUploadDocument, useDeleteDocument, getDocumentSignedUrl, DOCUMENT_TYPES } from "@/lib/hooks/use-documents";
 import { useOrgUsers } from "@/lib/hooks/use-user";
 import { useUser } from "@/lib/hooks/use-user";
@@ -392,12 +396,14 @@ export default function ProjectDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="overview">
         <TabsList className="bg-card border border-border rounded-xl p-1 h-auto flex flex-wrap gap-1">
-          {["overview", "kanban", "produtos", "melhorias", "upsell", "tarefas", "documentos", "financeiro", "timeline"].map((tab) => {
+          {["overview", "desenvolvimento", "pos_entrega", "produtos", "melhorias", "kanban", "upsell", "tarefas", "documentos", "financeiro", "timeline"].map((tab) => {
             const labels: Record<string, string> = {
-              overview: "Overview",
-              kanban: "Fases & Kanban",
+              overview: "Visão Geral",
+              desenvolvimento: "Desenvolvimento",
+              pos_entrega: "Pós-Entrega",
               produtos: "Produtos",
               melhorias: "Melhorias",
+              kanban: "Fases & Kanban",
               upsell: "Upsell",
               tarefas: "Tarefas",
               documentos: "Documentos",
@@ -412,8 +418,10 @@ export default function ProjectDetailPage() {
           })}
         </TabsList>
 
-        {/* ── Overview ── */}
-        <TabsContent value="overview" className="mt-4">
+        {/* ── Overview (V2 — começa com Identificação) ── */}
+        <TabsContent value="overview" className="mt-4 space-y-6">
+          <ProjectIdentification project={project} />
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left: description + milestones */}
             <div className="space-y-4">
@@ -486,6 +494,16 @@ export default function ProjectDetailPage() {
               </div>
             )}
           </div>
+        </TabsContent>
+
+        {/* ── Desenvolvimento ── */}
+        <TabsContent value="desenvolvimento" className="mt-4">
+          <ProjectDevelopment project={project} />
+        </TabsContent>
+
+        {/* ── Pós-Entrega (Mensalidade) ── */}
+        <TabsContent value="pos_entrega" className="mt-4">
+          {user?.org_id && <ProjectAftercare project={project} orgId={user.org_id} />}
         </TabsContent>
 
         {/* ── Kanban ── */}
@@ -856,6 +874,9 @@ export default function ProjectDetailPage() {
         {/* ── Financeiro ── */}
         <TabsContent value="financeiro" className="mt-4">
           <div className="space-y-4">
+            {/* Resumo financeiro V2 (comissão, plano, infra, margens) */}
+            <ProjectFinancialSummary project={project} />
+
             {/* Billing / contract */}
             <ProjectBilling project={project} />
 

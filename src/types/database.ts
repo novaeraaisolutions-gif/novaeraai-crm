@@ -212,10 +212,23 @@ export interface Database {
           contact_id: string | null;
           proposal_id: string | null;
           lead_id: string | null;
-          business_unit: "labs" | "advisory" | "enterprise";
+          business_unit: "labs" | "advisory" | "enterprise" | "intelligence";
           program: string | null;
           assignee_id: string | null;
-          status: "kickoff" | "em_andamento" | "pausado" | "em_revisao" | "concluido" | "cancelado";
+          status:
+            | "contrato_assinado"
+            | "em_desenvolvimento"
+            | "em_validacao_interna"
+            | "entregue_tet"
+            | "ativo_mensalidade"
+            | "upsell_identificado"
+            | "churned"
+            | "kickoff"
+            | "em_andamento"
+            | "pausado"
+            | "em_revisao"
+            | "concluido"
+            | "cancelado";
           start_date: string | null;
           expected_end_date: string | null;
           end_date: string | null;
@@ -229,6 +242,38 @@ export interface Database {
           contract_end: string | null;
           renewal_type: "auto" | "manual" | "no_renewal" | null;
           billing_status: "sem_mensalidade" | "ativo" | "suspenso" | "encerrado" | null;
+          // V2: identificação e contexto
+          niche: string | null;
+          primary_contact_name: string | null;
+          primary_contact_whatsapp: string | null;
+          closed_by_user_id: string | null;
+          closed_by_external_label: string | null;
+          developer_user_id: string | null;
+          // V2: financeiro
+          contract_plan: "core" | "evolucao" | "parceiro" | null;
+          dev_commission_pct: number | null;
+          infra_setup_cost: number | null;
+          infra_monthly_cost: number | null;
+          // V2: desenvolvimento
+          repo_url: string | null;
+          architecture_doc_url: string | null;
+          dev_started_at: string | null;
+          promised_delivery_date: string | null;
+          completion_percent: number | null;
+          risks_blockers: string | null;
+          code_review_done: boolean | null;
+          homologation_url: string | null;
+          implementation_notes: string | null;
+          // V2: pós-entrega/mensalidade
+          monthly_billing_start_date: string | null;
+          latest_nps_score: number | null;
+          latest_nps_date: string | null;
+          latest_meeting_date: string | null;
+          latest_report_url: string | null;
+          crs_opened_count: number | null;
+          crs_resolved_count: number | null;
+          upsell_opportunity_note: string | null;
+          churn_risk: "baixo" | "medio" | "alto" | null;
           created_at: string;
           updated_at: string;
           created_by: string | null;
@@ -299,6 +344,28 @@ export interface Database {
         };
         Insert: NullableToOptional<Omit<Database["public"]["Tables"]["project_product_stages"]["Row"], "id" | "created_at" | "updated_at">>;
         Update: Partial<Database["public"]["Tables"]["project_product_stages"]["Insert"]>;
+        Relationships: [];
+      };
+      project_monthly_checkins: {
+        Row: {
+          id: string;
+          org_id: string;
+          project_id: string;
+          reference_month: string;
+          nps_score: number | null;
+          meeting_done: boolean;
+          meeting_date: string | null;
+          report_url: string | null;
+          crs_opened: number | null;
+          crs_resolved: number | null;
+          upsell_opportunity: string | null;
+          churn_risk: "baixo" | "medio" | "alto" | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["project_monthly_checkins"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["project_monthly_checkins"]["Insert"]>;
         Relationships: [];
       };
       upsell_suggestions: {

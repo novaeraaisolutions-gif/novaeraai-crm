@@ -161,6 +161,11 @@ export const TaskForm = ({
         notes: values.notes || null,
       });
     } else {
+      // Guard: sem org_id (user ainda carregando) a inserção criaria a task
+      // com org_id="" e ela ficaria invisível por RLS — bloqueia.
+      if (!user?.org_id) {
+        return;
+      }
       await createTask.mutateAsync({
         title: values.title,
         type: values.type as TaskType,
@@ -168,11 +173,11 @@ export const TaskForm = ({
         priority: values.priority as TaskPriority,
         status: "pendente",
         notes: values.notes || null,
-        assignee_id: values.assignee_id || user?.id || null,
+        assignee_id: values.assignee_id || user.id || null,
         lead_id: leadId ?? null,
         project_id: projectId ?? null,
         phase_id: phaseId ?? null,
-        org_id: user?.org_id ?? "",
+        org_id: user.org_id,
       });
     }
     onSuccess?.();

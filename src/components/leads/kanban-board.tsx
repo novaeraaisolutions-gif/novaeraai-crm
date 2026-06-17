@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils/format";
 import { LeadCard } from "./lead-card";
 import type { LeadWithRelations } from "@/lib/hooks/use-leads";
 import type { PipelineWithStages } from "@/lib/hooks/use-pipelines";
+import { useLeadsContactSummary } from "@/lib/hooks/use-lead-contact-summary";
 
 interface KanbanBoardProps {
   pipeline: PipelineWithStages;
@@ -16,7 +17,6 @@ interface KanbanBoardProps {
   onDeleteLead: (lead: LeadWithRelations) => void;
   onAddLead: (stageId: string) => void;
   onQuickTask?: (lead: LeadWithRelations) => void;
-  onOpenLead?: (lead: LeadWithRelations) => void;
 }
 
 export const KanbanBoard = ({
@@ -27,8 +27,8 @@ export const KanbanBoard = ({
   onDeleteLead,
   onAddLead,
   onQuickTask,
-  onOpenLead,
 }: KanbanBoardProps) => {
+  const { data: contactSummary } = useLeadsContactSummary();
   const [isDragging, setIsDragging] = useState(false);
 
   const getStageLeads = useCallback(
@@ -114,7 +114,8 @@ export const KanbanBoard = ({
                               onEdit={onEditLead}
                               onDelete={onDeleteLead}
                               onQuickTask={onQuickTask}
-                              onOpen={onOpenLead}
+                              lastContact={contactSummary?.lastByLead.get(lead.id) ?? null}
+                              nextTask={contactSummary?.nextByLead.get(lead.id) ?? null}
                             />
                           </div>
                         )}

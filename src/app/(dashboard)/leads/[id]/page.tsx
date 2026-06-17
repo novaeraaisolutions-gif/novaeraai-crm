@@ -10,10 +10,7 @@ import {
   Thermometer,
   Pencil,
   Plus,
-  CheckCircle2,
-  Circle,
   FileText,
-  ClipboardList,
   MessageSquare,
   ChevronLeft,
   ChevronRight,
@@ -29,7 +26,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -49,9 +45,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Timeline } from "@/components/shared/timeline";
 import { LeadForm } from "@/components/forms/lead-form";
-import { TaskForm } from "@/components/forms/task-form";
+import { TaskForm, type TaskInitialData } from "@/components/forms/task-form";
+import { LeadActivityFeed } from "@/components/leads/lead-activity-feed";
 import { EmptyState } from "@/components/shared/empty-state";
 import { formatCurrency, formatDate, formatInitials } from "@/lib/utils/format";
 import {
@@ -60,7 +56,6 @@ import {
   LOSS_REASONS,
   PROPOSAL_STATUSES,
   PROJECT_STATUSES,
-  TASK_PRIORITIES,
   BUSINESS_UNITS,
 } from "@/lib/utils/constants";
 
@@ -68,8 +63,7 @@ const getProjectStatusMeta = (v: string) =>
   PROJECT_STATUSES.find((s) => s.value === v) ?? { label: v, color: "#94A3B8" };
 import { useLead, useUpdateLead, useDeleteLead, useMoveLead } from "@/lib/hooks/use-leads";
 import { usePipeline } from "@/lib/hooks/use-pipelines";
-import { useActivities, useAddActivity } from "@/lib/hooks/use-activities";
-import { useLeadTasks, useUpdateTask } from "@/lib/hooks/use-tasks";
+import { useLeadTasks } from "@/lib/hooks/use-tasks";
 import { useProposals } from "@/lib/hooks/use-proposals";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { useContact } from "@/lib/hooks/use-contacts";
@@ -93,13 +87,6 @@ const businessUnitColors: Record<string, string> = {
   enterprise: "bg-emerald-100 text-emerald-700",
 };
 
-const priorityColors: Record<string, string> = {
-  baixa: "#10B981",
-  media: "#6366F1",
-  alta: "#F59E0B",
-  urgente: "#EF4444",
-};
-
 const proposalStatusColors: Record<string, string> = {
   rascunho: "bg-white/5 text-slate-600",
   enviada: "bg-blue-950/60 text-blue-300",
@@ -118,12 +105,10 @@ export default function LeadDetailPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskInitialData | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [lossReason, setLossReason] = useState("");
-  const [noteText, setNoteText] = useState("");
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [notesText, setNotesText] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadFileName, setUploadFileName] = useState("");
   const [uploadFileType, setUploadFileType] = useState<"proposta" | "briefing" | "contrato" | "outro">("proposta");
@@ -133,7 +118,6 @@ export default function LeadDetailPage() {
 
   const { data: lead, isLoading } = useLead(id);
   const { data: pipeline } = usePipeline(lead?.pipeline_id ?? "");
-  const { data: activities } = useActivities("lead", id);
   const { data: tasks = [] } = useLeadTasks(id);
   const { data: allProposals } = useProposals();
   const { data: contact } = useContact(lead?.contact_id ?? "");
@@ -146,8 +130,6 @@ export default function LeadDetailPage() {
   const updateLead = useUpdateLead();
   const deleteLead = useDeleteLead();
   const moveLead = useMoveLead();
-  const addActivity = useAddActivity();
-  const updateTask = useUpdateTask();
   const uploadDocument = useUploadDocument();
   const deleteDocument = useDeleteDocument();
 
@@ -187,27 +169,6 @@ export default function LeadDetailPage() {
     router.push("/leads");
   };
 
-  // ─── Add note ───────────────────────────────────────────────────────────────
-  const handleAddNote = async () => {
-    if (!noteText.trim() || !lead || !user) return;
-    await addActivity.mutateAsync({
-      entity_type: "lead",
-      entity_id: lead.id,
-      type: "note_added",
-      description: noteText.trim(),
-      org_id: user.org_id,
-      created_by: user.id,
-    });
-    setNoteText("");
-  };
-
-  // ─── Save notes field ───────────────────────────────────────────────────────
-  const handleSaveNotes = async () => {
-    if (!lead) return;
-    await updateLead.mutateAsync({ id: lead.id, notes: notesText });
-    setEditingNotes(false);
-  };
-
   // ─── Upload document ────────────────────────────────────────────────────────
   const handleUploadDocument = async () => {
     if (!uploadFile || !uploadFileName.trim() || !lead || !user) return;
@@ -232,12 +193,6 @@ export default function LeadDetailPage() {
 
   const handleDeleteDocument = async (docId: string, filePath: string) => {
     await deleteDocument.mutateAsync({ id: docId, filePath });
-  };
-
-  // ─── Toggle task status ──────────────────────────────────────────────────────
-  const handleToggleTask = (taskId: string, currentStatus: string) => {
-    const newStatus = currentStatus === "concluida" ? "pendente" : "concluida";
-    updateTask.mutate({ id: taskId, status: newStatus as "pendente" | "concluida" });
   };
 
   // ─── Loading / Not found ─────────────────────────────────────────────────────
@@ -436,10 +391,6 @@ export default function LeadDetailPage() {
                 <FileText size={14} className="mr-1.5" />
                 Propostas
               </TabsTrigger>
-              <TabsTrigger value="tasks">
-                <ClipboardList size={14} className="mr-1.5" />
-                Tarefas
-              </TabsTrigger>
               <TabsTrigger value="documents">
                 <File size={14} className="mr-1.5" />
                 Documentos
@@ -448,41 +399,33 @@ export default function LeadDetailPage() {
                 <FolderOpen size={14} className="mr-1.5" />
                 Projetos
               </TabsTrigger>
-              <TabsTrigger value="notes">
-                <Pencil size={14} className="mr-1.5" />
-                Notas
-              </TabsTrigger>
             </TabsList>
 
-            {/* ── Tab: Atividades ── */}
+            {/* ── Tab: Atividades (unifica atividades + tarefas + notas) ── */}
             <TabsContent value="activities">
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h3 className="font-semibold text-text-primary mb-4">Histórico</h3>
-                <Timeline items={activities ?? []} />
-
-                {/* Quick note input */}
-                <div className="mt-6 pt-4 border-t border-border space-y-2">
-                  <Label className="text-xs text-text-muted uppercase tracking-wide">
-                    Adicionar Nota
-                  </Label>
-                  <Textarea
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Escreva uma nota rápida..."
-                    rows={3}
-                  />
-                  <div className="flex justify-end">
-                    <Button
-                      size="sm"
-                      onClick={handleAddNote}
-                      disabled={!noteText.trim() || addActivity.isPending}
-                      style={{ background: "var(--primary)" }}
-                    >
-                      Adicionar Nota
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <LeadActivityFeed
+                leadId={id}
+                leadNotes={lead?.notes ?? null}
+                onOpenTaskForm={() => { setEditingTask(undefined); setTaskFormOpen(true); }}
+                onEditTask={(taskId) => {
+                  const task = tasks.find((t) => t.id === taskId);
+                  if (!task) return;
+                  setEditingTask({
+                    id: task.id,
+                    title: task.title,
+                    type: task.type,
+                    due_date: task.due_date,
+                    priority: task.priority,
+                    status: task.status,
+                    notes: task.notes,
+                    lead_id: task.lead_id,
+                    project_id: task.project_id,
+                    phase_id: task.phase_id,
+                    assignee_id: task.assignee_id,
+                  });
+                  setTaskFormOpen(true);
+                }}
+              />
             </TabsContent>
 
             {/* ── Tab: Propostas ── */}
@@ -555,80 +498,6 @@ export default function LeadDetailPage() {
               </div>
             </TabsContent>
 
-            {/* ── Tab: Tarefas ── */}
-            <TabsContent value="tasks">
-              <div className="rounded-xl border border-border bg-card p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-text-primary">Tarefas</h3>
-                  <Button
-                    size="sm"
-                    onClick={() => setTaskFormOpen(true)}
-                    style={{ background: "var(--primary)" }}
-                  >
-                    <Plus size={14} className="mr-1.5" />
-                    Nova Tarefa
-                  </Button>
-                </div>
-
-                {tasks.length === 0 ? (
-                  <EmptyState
-                    icon={ClipboardList}
-                    title="Nenhuma tarefa"
-                    description="Crie tarefas para acompanhar este lead."
-                    action={{ label: "Nova Tarefa", onClick: () => setTaskFormOpen(true) }}
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    {tasks.map((task) => {
-                      const isDone = task.status === "concluida";
-                      const priorityColor = priorityColors[task.priority] ?? "#94A3B8";
-                      return (
-                        <div
-                          key={task.id}
-                          className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-white/5 transition-colors"
-                        >
-                          <button
-                            onClick={() => handleToggleTask(task.id, task.status)}
-                            className="shrink-0 text-text-muted hover:text-primary transition-colors"
-                          >
-                            {isDone ? (
-                              <CheckCircle2 size={18} className="text-success" />
-                            ) : (
-                              <Circle size={18} />
-                            )}
-                          </button>
-
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className={cn(
-                                "text-sm font-medium",
-                                isDone && "line-through text-text-muted"
-                              )}
-                            >
-                              {task.title}
-                            </p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-xs text-text-muted capitalize">{task.type}</span>
-                              {task.due_date && (
-                                <span className="text-xs text-text-muted">
-                                  · {formatDate(task.due_date)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            title={TASK_PRIORITIES.find((p) => p.value === task.priority)?.label}
-                            style={{ background: priorityColor }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </TabsContent>
 
             {/* ── Tab: Documentos ── */}
             <TabsContent value="documents">
@@ -852,61 +721,6 @@ export default function LeadDetailPage() {
               </div>
             </TabsContent>
 
-            {/* ── Tab: Notas ── */}
-            <TabsContent value="notes">
-              <div className="rounded-xl border border-border bg-card p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-text-primary">Notas</h3>
-                  {!editingNotes && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setNotesText(lead.notes ?? "");
-                        setEditingNotes(true);
-                      }}
-                    >
-                      <Pencil size={13} className="mr-1.5" />
-                      Editar
-                    </Button>
-                  )}
-                </div>
-
-                {editingNotes ? (
-                  <div className="space-y-3">
-                    <Textarea
-                      value={notesText}
-                      onChange={(e) => setNotesText(e.target.value)}
-                      rows={8}
-                      placeholder="Adicione notas sobre este lead..."
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingNotes(false)}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleSaveNotes}
-                        disabled={updateLead.isPending}
-                        style={{ background: "var(--primary)" }}
-                      >
-                        Salvar
-                      </Button>
-                    </div>
-                  </div>
-                ) : lead.notes ? (
-                  <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">
-                    {lead.notes}
-                  </p>
-                ) : (
-                  <p className="text-sm text-text-muted italic">Nenhuma nota adicionada.</p>
-                )}
-              </div>
-            </TabsContent>
           </Tabs>
         </div>
 
@@ -1105,9 +919,10 @@ export default function LeadDetailPage() {
       {/* Task Form */}
       <TaskForm
         open={taskFormOpen}
-        onClose={() => setTaskFormOpen(false)}
+        onClose={() => { setTaskFormOpen(false); setEditingTask(undefined); }}
         leadId={id}
-        onSuccess={() => setTaskFormOpen(false)}
+        initialData={editingTask}
+        onSuccess={() => { setTaskFormOpen(false); setEditingTask(undefined); }}
       />
 
       {/* Mark as Lost */}

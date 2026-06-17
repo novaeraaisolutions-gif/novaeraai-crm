@@ -119,10 +119,18 @@ export const useCreateTask = () => {
       return data;
     },
     onSuccess: () => {
+      // Invalida tudo que depende de tasks: lista geral, por lead, por projeto,
+      // resumo de contato dos cards do kanban, e atividades (caso DB trigger
+      // crie activity automaticamente).
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["leads-contact-summary"] });
+      qc.invalidateQueries({ queryKey: ["activities"] });
       toast.success("Tarefa criada!");
     },
-    onError: () => toast.error("Erro ao criar tarefa"),
+    onError: (err) => {
+      console.error(err);
+      toast.error("Erro ao criar tarefa");
+    },
   });
 };
 
@@ -136,6 +144,8 @@ export const useUpdateTask = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["leads-contact-summary"] });
+      qc.invalidateQueries({ queryKey: ["activities"] });
       toast.success("Tarefa atualizada!");
     },
     onError: () => toast.error("Erro ao atualizar tarefa"),
@@ -158,6 +168,8 @@ export const useToggleTask = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["leads-contact-summary"] });
+      qc.invalidateQueries({ queryKey: ["activities"] });
     },
     onError: () => toast.error("Erro ao atualizar tarefa"),
   });
@@ -173,6 +185,7 @@ export const useDeleteTask = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["leads-contact-summary"] });
       toast.success("Tarefa removida!");
     },
     onError: () => toast.error("Erro ao remover tarefa"),

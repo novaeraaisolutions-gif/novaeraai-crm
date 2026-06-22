@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { TASK_PRIORITIES } from "@/lib/utils/constants";
+import { toast } from "sonner";
 import { useCreateTask, useUpdateTask } from "@/lib/hooks/use-tasks";
 import { useUser, useOrgUsers } from "@/lib/hooks/use-user";
 import type { Database } from "@/types/database";
@@ -164,6 +165,7 @@ export const TaskForm = ({
       // Guard: sem org_id (user ainda carregando) a inserção criaria a task
       // com org_id="" e ela ficaria invisível por RLS — bloqueia.
       if (!user?.org_id) {
+        toast.error("Aguarde — sua organização ainda está carregando. Tente novamente.");
         return;
       }
       await createTask.mutateAsync({

@@ -117,7 +117,7 @@ function DocumentCard({ doc, onDelete }: { doc: DocumentWithRelations; onDelete:
 
       {/* Name + type */}
       <div className="flex-1">
-        <p className="text-sm font-semibold text-[#0F172A] line-clamp-2 leading-snug">{doc.name}</p>
+        <p className="text-sm font-semibold text-text-primary line-clamp-2 leading-snug">{doc.name}</p>
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 text-text-muted mt-1.5">
           {docTypeLabel}
         </span>
@@ -245,7 +245,7 @@ function UploadModal({ open, onClose, orgId, uploadedBy, initialCompanyId = "", 
             <input {...getInputProps()} />
             <div className="flex flex-col items-center gap-2">
               <Upload size={24} className="text-[#0B87C3]" />
-              <p className="text-sm font-medium text-[#0F172A]">
+              <p className="text-sm font-medium text-text-primary">
                 {isDragActive ? "Solte os arquivos aqui" : "Arraste arquivos ou clique para selecionar"}
               </p>
               <p className="text-xs text-text-muted">Múltiplos arquivos suportados</p>
@@ -258,7 +258,7 @@ function UploadModal({ open, onClose, orgId, uploadedBy, initialCompanyId = "", 
               {staged.map((f, i) => (
                 <div key={i} className="rounded-lg p-3 space-y-3" style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-[#0F172A] flex-1 truncate">{f.file.name}</p>
+                    <p className="text-sm font-medium text-text-primary flex-1 truncate">{f.file.name}</p>
                     <button
                       onClick={() => setStaged((prev) => prev.filter((_, idx) => idx !== i))}
                       className="text-text-muted hover:text-red-500 flex-shrink-0"
@@ -536,7 +536,7 @@ export default function DocumentsPage() {
           {selectedProject && (
             <>
               <ChevronRight size={14} />
-              <span className="text-[#0F172A] font-medium">{selectedProject.name}</span>
+              <span className="text-text-primary font-medium">{selectedProject.name}</span>
             </>
           )}
         </div>

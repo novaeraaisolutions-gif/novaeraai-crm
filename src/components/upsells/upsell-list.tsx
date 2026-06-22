@@ -171,7 +171,7 @@ export function UpsellList({ scope, companyId, projectId, orgId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-[#0F172A]">
+          <h3 className="text-sm font-semibold text-text-primary">
             {scope === "global" ? "Oportunidades de Upsell" : "Sugestões de Upsell"}
           </h3>
           <p className="text-xs text-text-muted mt-0.5">
@@ -201,11 +201,11 @@ export function UpsellList({ scope, companyId, projectId, orgId }: Props) {
               <div key={a.key} className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-[#0F172A]">{a.productName}</p>
+                    <p className="text-sm font-medium text-text-primary">{a.productName}</p>
                     {scope === "global" && (
                       <Link
                         href={`/companies/${a.companyId}`}
-                        className="text-xs text-[#0B87C3] hover:underline"
+                        className="text-xs text-primary hover:underline"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {a.companyName}
@@ -264,7 +264,7 @@ export function UpsellList({ scope, companyId, projectId, orgId }: Props) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="text-sm font-semibold text-[#0F172A]">{u.title}</p>
+                      <p className="text-sm font-semibold text-text-primary">{u.title}</p>
                       <span
                         className="rounded-full px-2 py-0.5 text-[10px] font-medium"
                         style={{ background: `${statusMeta.color}20`, color: statusMeta.color }}
@@ -281,7 +281,7 @@ export function UpsellList({ scope, companyId, projectId, orgId }: Props) {
                         <Link
                           href={`/companies/${u.company.id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="text-xs text-[#0B87C3] hover:underline"
+                          className="text-xs text-primary hover:underline"
                         >
                           {u.company.name}
                         </Link>

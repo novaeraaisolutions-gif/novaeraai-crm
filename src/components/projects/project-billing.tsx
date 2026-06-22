@@ -91,7 +91,7 @@ export function ProjectBilling({ project }: Props) {
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-[#0F172A]">Contrato de Mensalidade</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Contrato de Mensalidade</h3>
           <p className="text-xs text-text-muted mt-0.5">
             Dia de cobrança, valor recorrente e prazo de contrato
           </p>

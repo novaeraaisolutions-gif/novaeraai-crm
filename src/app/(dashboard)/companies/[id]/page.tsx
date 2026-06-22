@@ -79,7 +79,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
       <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
         {label}
       </p>
-      <div className="text-sm text-[#0F172A]">{value}</div>
+      <div className="text-sm text-text-primary">{value}</div>
     </div>
   );
 }
@@ -135,7 +135,7 @@ export default function CompanyDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <Building2 size={48} className="text-text-muted mb-4" />
-        <h2 className="text-lg font-semibold text-[#0F172A] mb-2">Empresa não encontrada</h2>
+        <h2 className="text-lg font-semibold text-text-primary mb-2">Empresa não encontrada</h2>
         <p className="text-sm text-text-muted mb-6">
           A empresa que você está procurando não existe ou foi removida.
         </p>
@@ -168,7 +168,7 @@ export default function CompanyDetailPage() {
             {formatInitials(company.name)}
           </div>
           <div>
-            <h1 className="font-bold text-2xl text-[#0F172A] leading-tight">{company.name}</h1>
+            <h1 className="font-bold text-2xl text-text-primary leading-tight">{company.name}</h1>
             {company.trade_name && (
               <p className="text-sm text-text-muted mt-0.5">{company.trade_name}</p>
             )}
@@ -224,7 +224,7 @@ export default function CompanyDetailPage() {
               <DollarSign size={16} className="text-emerald-600" />
             </div>
           </div>
-          <p className="font-bold text-xl text-[#0F172A]">{formatCurrency(totalRevenue)}</p>
+          <p className="font-bold text-xl text-text-primary">{formatCurrency(totalRevenue)}</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6">
@@ -236,7 +236,7 @@ export default function CompanyDetailPage() {
               <TrendingUp size={16} className="text-blue-600" />
             </div>
           </div>
-          <p className="font-bold text-2xl text-[#0F172A]">{activeLeads}</p>
+          <p className="font-bold text-2xl text-text-primary">{activeLeads}</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6">
@@ -248,7 +248,7 @@ export default function CompanyDetailPage() {
               <FolderOpen size={16} className="text-purple-600" />
             </div>
           </div>
-          <p className="font-bold text-2xl text-[#0F172A]">{activeProjects}</p>
+          <p className="font-bold text-2xl text-text-primary">{activeProjects}</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6">
@@ -260,7 +260,7 @@ export default function CompanyDetailPage() {
               <Clock size={16} className="text-amber-600" />
             </div>
           </div>
-          <p className="font-bold text-base text-[#0F172A] leading-snug">
+          <p className="font-bold text-base text-text-primary leading-snug">
             {lastActivity ? formatRelative(lastActivity) : "—"}
           </p>
         </div>
@@ -346,7 +346,7 @@ export default function CompanyDetailPage() {
                     <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
                       Observações
                     </p>
-                    <p className="text-sm text-[#0F172A] whitespace-pre-line">{company.notes}</p>
+                    <p className="text-sm text-text-primary whitespace-pre-line">{company.notes}</p>
                   </div>
                 )}
               </div>
@@ -355,7 +355,7 @@ export default function CompanyDetailPage() {
             {/* Contacts */}
             <TabsContent value="contacts" className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[#0F172A]">
+                <h3 className="text-sm font-semibold text-text-primary">
                   Contatos ({contacts?.length ?? 0})
                 </h3>
                 <Button size="sm" variant="outline" onClick={() => setContactFormOpen(true)}>
@@ -393,7 +393,7 @@ export default function CompanyDetailPage() {
                           {formatInitials(contact.full_name)}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-[#0F172A]">
+                          <p className="text-sm font-medium text-text-primary">
                             {contact.full_name}
                           </p>
                           <p className="text-xs text-text-muted">
@@ -415,7 +415,7 @@ export default function CompanyDetailPage() {
             {/* Leads */}
             <TabsContent value="leads" className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[#0F172A]">
+                <h3 className="text-sm font-semibold text-text-primary">
                   Leads ({leads?.length ?? 0})
                 </h3>
                 <Button size="sm" variant="outline" onClick={() => setLeadFormOpen(true)}>
@@ -464,7 +464,7 @@ export default function CompanyDetailPage() {
                           onClick={() => router.push(`/leads/${lead.id}`)}
                         >
                           <td className="py-3 pr-4">
-                            <p className="font-medium text-[#0F172A]">{lead.title}</p>
+                            <p className="font-medium text-text-primary">{lead.title}</p>
                             <p className="text-xs text-text-muted">
                               {formatDate(lead.created_at)}
                             </p>
@@ -486,7 +486,7 @@ export default function CompanyDetailPage() {
                               <span className="text-text-muted">—</span>
                             )}
                           </td>
-                          <td className="py-3 pr-4 text-[#0F172A]">
+                          <td className="py-3 pr-4 text-text-primary">
                             {lead.value ? formatCurrency(lead.value) : "—"}
                           </td>
                           <td className="py-3">
@@ -514,7 +514,7 @@ export default function CompanyDetailPage() {
             {/* Projects */}
             <TabsContent value="projects" className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[#0F172A]">
+                <h3 className="text-sm font-semibold text-text-primary">
                   Projetos ({projects?.length ?? 0})
                 </h3>
                 <Button size="sm" variant="outline" disabled title="Em breve">
@@ -548,7 +548,7 @@ export default function CompanyDetailPage() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <p className="text-sm font-medium text-[#0F172A] truncate">
+                              <p className="text-sm font-medium text-text-primary truncate">
                                 {project.name}
                               </p>
                               <span
@@ -622,12 +622,12 @@ export default function CompanyDetailPage() {
         <div className="space-y-4">
           {/* Details */}
           <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-[#0F172A]">Detalhes</h3>
+            <h3 className="text-sm font-semibold text-text-primary">Detalhes</h3>
             <div className="space-y-3 text-sm">
               {company.cnpj && (
                 <div>
                   <p className="text-xs text-text-muted mb-0.5">CNPJ</p>
-                  <p className="text-[#0F172A]">{company.cnpj}</p>
+                  <p className="text-text-primary">{company.cnpj}</p>
                 </div>
               )}
               {company.website && (
@@ -647,7 +647,7 @@ export default function CompanyDetailPage() {
               {company.address && (
                 <div>
                   <p className="text-xs text-text-muted mb-0.5">Endereço</p>
-                  <p className="text-[#0F172A] flex items-start gap-1">
+                  <p className="text-text-primary flex items-start gap-1">
                     <MapPin size={13} className="mt-0.5 flex-shrink-0 text-text-muted" />
                     {company.address}
                   </p>
@@ -655,7 +655,7 @@ export default function CompanyDetailPage() {
               )}
               <div>
                 <p className="text-xs text-text-muted mb-0.5">Cadastrado em</p>
-                <p className="text-[#0F172A]">{formatDate(company.created_at)}</p>
+                <p className="text-text-primary">{formatDate(company.created_at)}</p>
               </div>
             </div>
           </div>
@@ -663,7 +663,7 @@ export default function CompanyDetailPage() {
           {/* Tags */}
           {company.tags && company.tags.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="text-sm font-semibold text-[#0F172A] mb-3">Tags</h3>
+              <h3 className="text-sm font-semibold text-text-primary mb-3">Tags</h3>
               <div className="flex flex-wrap gap-1.5">
                 {company.tags.map((tag) => (
                   <Badge key={tag} variant="secondary" className="text-xs">
@@ -676,14 +676,14 @@ export default function CompanyDetailPage() {
 
           {/* Quick Actions */}
           <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="text-sm font-semibold text-[#0F172A] mb-3">Ações Rápidas</h3>
+            <h3 className="text-sm font-semibold text-text-primary mb-3">Ações Rápidas</h3>
             <div className="space-y-2">
               {contacts?.[0]?.phone && (
                 <a
                   href={`https://wa.me/${contacts[0].phone.replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-[#0F172A] transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-text-primary transition-colors"
                 >
                   <MessageCircle size={15} className="text-emerald-500" />
                   WhatsApp
@@ -692,7 +692,7 @@ export default function CompanyDetailPage() {
               {contacts?.[0]?.email && (
                 <a
                   href={`mailto:${contacts[0].email}`}
-                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-[#0F172A] transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-text-primary transition-colors"
                 >
                   <Mail size={15} className="text-blue-500" />
                   Enviar E-mail

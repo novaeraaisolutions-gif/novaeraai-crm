@@ -63,7 +63,7 @@ type DocumentType = Database["public"]["Tables"]["documents"]["Row"]["type"];
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
   kickoff:      { bg: "bg-indigo-100", text: "text-indigo-700" },
-  em_andamento: { bg: "bg-[#0B87C3]/10", text: "text-[#0B87C3]" },
+  em_andamento: { bg: "bg-[#0B87C3]/10", text: "text-primary" },
   pausado:      { bg: "bg-amber-100", text: "text-amber-700" },
   em_revisao:   { bg: "bg-orange-100", text: "text-orange-700" },
   concluido:    { bg: "bg-emerald-100", text: "text-emerald-700" },
@@ -72,7 +72,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
 
 const PHASE_STATUS_STYLES: Record<string, { bg: string; text: string }> = {
   pendente:     { bg: "bg-gray-100", text: "text-gray-600" },
-  em_andamento: { bg: "bg-[#0B87C3]/10", text: "text-[#0B87C3]" },
+  em_andamento: { bg: "bg-[#0B87C3]/10", text: "text-primary" },
   concluida:    { bg: "bg-emerald-100", text: "text-emerald-700" },
 };
 
@@ -100,7 +100,7 @@ function UserAvatar({ userId, users, size = "sm" }: { userId: string | null; use
   const dim = size === "md" ? "w-8 h-8 text-xs" : "w-6 h-6 text-[10px]";
   return (
     <div
-      className={cn("rounded-full bg-[#0B87C3]/20 text-[#0B87C3] font-semibold flex items-center justify-center flex-shrink-0", dim)}
+      className={cn("rounded-full bg-[#0B87C3]/20 text-primary font-semibold flex items-center justify-center flex-shrink-0", dim)}
       title={user.full_name}
     >
       {formatInitials(user.full_name)}
@@ -271,7 +271,7 @@ export default function ProjectDetailPage() {
       {/* Back */}
       <button
         onClick={() => router.push("/projects")}
-        className="flex items-center gap-1.5 text-sm text-text-muted hover:text-[#0F172A] transition-colors"
+        className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors"
       >
         <ArrowLeft size={16} />
         Projetos
@@ -298,11 +298,11 @@ export default function ProjectDetailPage() {
                 </span>
               )}
             </div>
-            <h1 className="font-display font-bold text-2xl text-[#0F172A] mt-1">{project.name}</h1>
+            <h1 className="font-display font-bold text-2xl text-text-primary mt-1">{project.name}</h1>
             {project.company && (
               <Link
                 href={`/companies/${project.company.id}`}
-                className="text-sm text-[#0B87C3] hover:underline mt-0.5 inline-block"
+                className="text-sm text-primary hover:underline mt-0.5 inline-block"
               >
                 {project.company.name}
               </Link>
@@ -311,7 +311,7 @@ export default function ProjectDetailPage() {
             <div className="mt-4">
               <div className="flex items-center justify-between text-sm mb-1.5">
                 <span className="text-text-muted">Progresso geral</span>
-                <span className="font-semibold text-[#0F172A]">{project.progress}%</span>
+                <span className="font-semibold text-text-primary">{project.progress}%</span>
               </div>
               <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                 <div
@@ -343,7 +343,7 @@ export default function ProjectDetailPage() {
               {contractValue > 0 && (
                 <div className="flex items-center gap-1.5">
                   <DollarSign size={14} />
-                  <span>Contrato: <strong className="text-[#0F172A]">{formatCurrency(contractValue)}</strong></span>
+                  <span>Contrato: <strong className="text-text-primary">{formatCurrency(contractValue)}</strong></span>
                   <span>·</span>
                   <span>Recebido: <strong className="text-emerald-600">{formatCurrency(receivedValue)}</strong></span>
                 </div>
@@ -375,21 +375,21 @@ export default function ProjectDetailPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs font-semibold uppercase text-text-muted tracking-wider">Progresso</p>
-          <p className="font-display font-bold text-3xl text-[#0F172A] mt-2">{project.progress}%</p>
+          <p className="font-display font-bold text-3xl text-text-primary mt-2">{project.progress}%</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs font-semibold uppercase text-text-muted tracking-wider">Dias Restantes</p>
-          <p className={cn("font-display font-bold text-3xl mt-2", daysInfo !== null && daysInfo < 0 ? "text-red-500" : "text-[#0F172A]")}>
+          <p className={cn("font-display font-bold text-3xl mt-2", daysInfo !== null && daysInfo < 0 ? "text-red-500" : "text-text-primary")}>
             {daysInfo !== null ? (daysInfo < 0 ? `+${Math.abs(daysInfo)}` : daysInfo) : "—"}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs font-semibold uppercase text-text-muted tracking-wider">Tarefas Pendentes</p>
-          <p className="font-display font-bold text-3xl text-[#0F172A] mt-2">{pendingTasksCount}</p>
+          <p className="font-display font-bold text-3xl text-text-primary mt-2">{pendingTasksCount}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs font-semibold uppercase text-text-muted tracking-wider">Valor a Receber</p>
-          <p className="font-display font-bold text-2xl text-[#0F172A] mt-2">{formatCurrency(pendingValue)}</p>
+          <p className="font-display font-bold text-2xl text-text-primary mt-2">{formatCurrency(pendingValue)}</p>
         </div>
       </div>
 
@@ -427,15 +427,15 @@ export default function ProjectDetailPage() {
             <div className="space-y-4">
               {project.description && (
                 <div className="rounded-xl border border-border bg-card p-5">
-                  <h3 className="text-sm font-semibold text-[#0F172A] mb-3">Descrição / Escopo</h3>
-                  <p className="text-sm text-[#475569] whitespace-pre-wrap leading-relaxed">{project.description}</p>
+                  <h3 className="text-sm font-semibold text-text-primary mb-3">Descrição / Escopo</h3>
+                  <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{project.description}</p>
                 </div>
               )}
 
               {/* Milestones across all phases */}
               {project.phases && project.phases.length > 0 && (
                 <div className="rounded-xl border border-border bg-card p-5">
-                  <h3 className="text-sm font-semibold text-[#0F172A] mb-3">Marcos</h3>
+                  <h3 className="text-sm font-semibold text-text-primary mb-3">Marcos</h3>
                   <div className="space-y-2">
                     {project.phases.flatMap((phase) =>
                       phase.milestones.map((m) => (
@@ -470,7 +470,7 @@ export default function ProjectDetailPage() {
             {/* Right: phases */}
             {project.phases && project.phases.length > 0 && (
               <div className="rounded-xl border border-border bg-card p-5">
-                <h3 className="text-sm font-semibold text-[#0F172A] mb-3">Fases</h3>
+                <h3 className="text-sm font-semibold text-text-primary mb-3">Fases</h3>
                 <div className="space-y-3">
                   {project.phases.map((phase) => {
                     const ps = PHASE_STATUS_STYLES[phase.status] ?? { bg: "bg-gray-100", text: "text-gray-600" };
@@ -478,7 +478,7 @@ export default function ProjectDetailPage() {
                     return (
                       <div key={phase.id} className="flex items-center gap-4 p-3 rounded-lg bg-white/5">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[#0F172A]">{phase.name}</p>
+                          <p className="text-sm font-medium text-text-primary">{phase.name}</p>
                           <div className="flex gap-3 text-xs text-text-muted mt-0.5">
                             {phase.start_date && <span>{formatDate(phase.start_date)}</span>}
                             {phase.end_date && <span>→ {formatDate(phase.end_date)}</span>}
@@ -528,7 +528,7 @@ export default function ProjectDetailPage() {
                       <div key={phase.id} className="w-72 flex-shrink-0">
                         <div className="rounded-t-xl bg-card border border-border border-b-0 p-3 flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-semibold text-[#0F172A]">{phase.name}</p>
+                            <p className="text-sm font-semibold text-text-primary">{phase.name}</p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-xs text-text-muted">{phaseTasks.length} tarefas</span>
                               <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium", ps.bg, ps.text)}>
@@ -571,7 +571,7 @@ export default function ProjectDetailPage() {
                                         <div {...provided.dragHandleProps} className="text-[#CBD5E1] mt-0.5 flex-shrink-0">
                                           <GripVertical size={14} />
                                         </div>
-                                        <p className="text-sm text-[#0F172A] flex-1 leading-snug">{task.title}</p>
+                                        <p className="text-sm text-text-primary flex-1 leading-snug">{task.title}</p>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <div
@@ -670,7 +670,7 @@ export default function ProjectDetailPage() {
                     <div className="px-4 py-3 bg-white/5 border-b border-border">
                       <p className="text-sm font-semibold text-text-muted">{phase.name}</p>
                     </div>
-                    <div className="divide-y divide-[#F1F5F9]">
+                    <div className="divide-y divide-border">
                       {phaseTasks.map((task) => (
                         <TaskRow key={task.id} task={task} users={orgUsers} onToggle={(id, status) =>
                           updateTask.mutate({ id, status: status as TaskStatus })
@@ -691,7 +691,7 @@ export default function ProjectDetailPage() {
                 />
               ) : (
                 <div className="rounded-xl border border-border bg-card overflow-hidden">
-                  <div className="divide-y divide-[#F1F5F9]">
+                  <div className="divide-y divide-border">
                     {filteredTasks.map((task) => (
                       <TaskRow key={task.id} task={task} users={orgUsers} onToggle={(id, status) =>
                         updateTask.mutate({ id, status: status as TaskStatus })
@@ -711,7 +711,7 @@ export default function ProjectDetailPage() {
                   <div className="px-4 py-3 bg-white/5 border-b border-border">
                     <p className="text-sm font-semibold text-text-muted">Sem fase</p>
                   </div>
-                  <div className="divide-y divide-[#F1F5F9]">
+                  <div className="divide-y divide-border">
                     {noPhase.map((task) => (
                       <TaskRow key={task.id} task={task} users={orgUsers} onToggle={(id, status) =>
                         updateTask.mutate({ id, status: status as TaskStatus })
@@ -740,9 +740,9 @@ export default function ProjectDetailPage() {
               <input {...getInputProps()} />
               <div className="flex flex-col items-center gap-2">
                 <div className="w-10 h-10 rounded-full bg-[#0B87C3]/10 flex items-center justify-center">
-                  <FileText size={20} className="text-[#0B87C3]" />
+                  <FileText size={20} className="text-primary" />
                 </div>
-                <p className="text-sm font-medium text-[#0F172A]">
+                <p className="text-sm font-medium text-text-primary">
                   {isDragActive ? "Solte os arquivos aqui" : "Arraste arquivos ou clique para fazer upload"}
                 </p>
                 <p className="text-xs text-text-muted">PDF, Word, Excel, imagens e outros</p>
@@ -752,11 +752,11 @@ export default function ProjectDetailPage() {
             {/* Staged files */}
             {uploadFiles.length > 0 && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-[#0F172A]">Arquivos para upload</h3>
+                <h3 className="text-sm font-semibold text-text-primary">Arquivos para upload</h3>
                 {uploadFiles.map((f, i) => (
                   <div key={i} className="space-y-1.5">
                     <div className="flex items-center gap-3">
-                      <p className="text-sm text-[#0F172A] flex-1 truncate">{f.file.name}</p>
+                      <p className="text-sm text-text-primary flex-1 truncate">{f.file.name}</p>
                       <select
                         value={f.type}
                         onChange={(e) =>
@@ -823,7 +823,7 @@ export default function ProjectDetailPage() {
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-[#0F172A] line-clamp-2">{doc.name}</p>
+                        <p className="text-sm font-medium text-text-primary line-clamp-2">{doc.name}</p>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 text-text-muted mt-1">
                           {docTypeLabel}
                         </span>
@@ -899,12 +899,12 @@ export default function ProjectDetailPage() {
             {contractValue > 0 && (
               <div className="rounded-xl border border-border bg-card p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-[#0F172A]">Resumo Financeiro</h3>
+                  <h3 className="text-sm font-semibold text-text-primary">Resumo Financeiro</h3>
                 </div>
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div>
                     <p className="text-xs text-text-muted">Valor Contrato</p>
-                    <p className="text-lg font-bold text-[#0F172A]">{formatCurrency(contractValue)}</p>
+                    <p className="text-lg font-bold text-text-primary">{formatCurrency(contractValue)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-text-muted">Recebido</p>
@@ -936,19 +936,19 @@ export default function ProjectDetailPage() {
               />
             ) : (
               <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="divide-y divide-[#F1F5F9]">
+                <div className="divide-y divide-border">
                   {revenues.map((rev) => {
                     const rs = REVENUE_STATUS_STYLES[rev.status] ?? { bg: "bg-gray-100", text: "text-gray-600" };
                     const statusLabel = rev.status === "pendente" ? "Pendente" : rev.status === "pago" ? "Pago" : rev.status === "atrasado" ? "Atrasado" : "Cancelado";
                     return (
                       <div key={rev.id} className="flex items-center gap-4 px-4 py-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[#0F172A]">{rev.description}</p>
+                          <p className="text-sm font-medium text-text-primary">{rev.description}</p>
                           {rev.installment && (
                             <p className="text-xs text-text-muted">Parcela: {rev.installment}</p>
                           )}
                         </div>
-                        <p className="text-sm font-semibold text-[#0F172A]">{formatCurrency(rev.value)}</p>
+                        <p className="text-sm font-semibold text-text-primary">{formatCurrency(rev.value)}</p>
                         <p className="text-xs text-text-muted w-24 text-right">
                           {rev.due_date ? formatDate(rev.due_date) : "—"}
                         </p>

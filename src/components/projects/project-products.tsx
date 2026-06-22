@@ -104,7 +104,7 @@ export function ProjectProducts({ projectId, orgId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-[#0F172A]">Produtos do Projeto</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Produtos do Projeto</h3>
           <p className="text-xs text-text-muted mt-0.5">
             Itens entregáveis com etapas de desenvolvimento (data prometida × prevista × real)
           </p>
@@ -267,7 +267,7 @@ function ProductCard({
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-semibold text-[#0F172A]">{product.name}</p>
+            <p className="text-sm font-semibold text-text-primary">{product.name}</p>
             <span
               className="rounded-full px-2 py-0.5 text-[10px] font-medium"
               style={{ background: `${productMeta.color}20`, color: productMeta.color }}
@@ -389,7 +389,7 @@ function StageRow({
     <div className="grid grid-cols-[1fr_140px_140px_140px_120px_30px] gap-2 items-center text-xs p-2 rounded-lg hover:bg-white/5 transition-colors">
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="text-sm font-medium text-[#0F172A] truncate">{stage.name}</p>
+          <p className="text-sm font-medium text-text-primary truncate">{stage.name}</p>
           {slipDays !== null && slipDays > 0 && (
             <span className="flex items-center gap-0.5 text-[10px] text-red-600 whitespace-nowrap">
               <AlertTriangle size={10} />

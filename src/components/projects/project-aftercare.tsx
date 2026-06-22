@@ -113,7 +113,7 @@ export function ProjectAftercare({ project, orgId }: Props) {
       <div className="rounded-xl border border-border bg-card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-[#0F172A]">Pós-Entrega (Mensalidade)</h3>
+            <h3 className="text-sm font-semibold text-text-primary">Pós-Entrega (Mensalidade)</h3>
             <p className="text-xs text-text-muted mt-0.5">
               NPS, reuniões mensais, CRs e risco de churn
             </p>
@@ -181,7 +181,7 @@ export function ProjectAftercare({ project, orgId }: Props) {
 
       {/* Histórico de check-ins */}
       <div className="rounded-xl border border-border bg-card p-5">
-        <h4 className="text-sm font-semibold text-[#0F172A] mb-3">Histórico de Check-ins Mensais</h4>
+        <h4 className="text-sm font-semibold text-text-primary mb-3">Histórico de Check-ins Mensais</h4>
 
         {isLoading ? (
           <p className="text-sm text-text-muted">Carregando...</p>
@@ -212,7 +212,7 @@ export function ProjectAftercare({ project, orgId }: Props) {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-[#0F172A] capitalize">{monthLabel}</p>
+                        <p className="text-sm font-semibold text-text-primary capitalize">{monthLabel}</p>
                         {c.meeting_done ? (
                           <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-100 text-emerald-700">
                             ✓ Reunião feita
@@ -252,7 +252,7 @@ export function ProjectAftercare({ project, orgId }: Props) {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="text-[#0B87C3] hover:underline inline-flex items-center gap-0.5"
+                              className="text-primary hover:underline inline-flex items-center gap-0.5"
                             >
                               <ExternalLink size={10} /> relatório
                             </a>

@@ -88,7 +88,7 @@ export function ProjectDevelopment({ project }: Props) {
     <div className="rounded-xl border border-border bg-card p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-[#0F172A]">Desenvolvimento</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Desenvolvimento</h3>
           <p className="text-xs text-text-muted mt-0.5">
             Repositório, arquitetura, prazos e code review
           </p>
@@ -103,7 +103,7 @@ export function ProjectDevelopment({ project }: Props) {
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs text-text-muted">Progresso de desenvolvimento</span>
-          <span className="text-sm font-bold text-[#0F172A]">{progress}%</span>
+          <span className="text-sm font-bold text-text-primary">{progress}%</span>
         </div>
         <div className="h-2 bg-white/5 rounded-full overflow-hidden">
           <div
@@ -280,7 +280,7 @@ export function ProjectDevelopment({ project }: Props) {
                 onChange={(e) => setForm((f) => ({ ...f, code_review_done: e.target.checked }))}
                 className="w-4 h-4"
               />
-              <span className="text-sm text-[#0F172A]">Code review feito pelo Gabriel</span>
+              <span className="text-sm text-text-primary">Code review feito pelo Gabriel</span>
             </label>
           </div>
 
@@ -310,7 +310,7 @@ function Field({
       <Icon size={14} className="text-text-muted mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-[10px] text-text-muted uppercase tracking-wider">{label}</p>
-        <p className="text-sm font-medium text-[#0F172A]">{value}</p>
+        <p className="text-sm font-medium text-text-primary">{value}</p>
       </div>
     </div>
   );
@@ -335,7 +335,7 @@ function LinkField({
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-[#0B87C3] hover:underline truncate block"
+            className="text-sm font-medium text-primary hover:underline truncate block"
           >
             {url}
           </a>

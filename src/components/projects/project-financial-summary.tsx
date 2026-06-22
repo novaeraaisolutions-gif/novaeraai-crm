@@ -91,7 +91,7 @@ export function ProjectFinancialSummary({ project }: Props) {
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-[#0F172A]">Resumo Financeiro</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Resumo Financeiro</h3>
           <p className="text-xs text-text-muted mt-0.5">
             Implementação, mensalidade, comissão DEV e margem bruta
           </p>

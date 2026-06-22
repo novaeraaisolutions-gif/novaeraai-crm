@@ -325,7 +325,7 @@ export default function ProjectsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
-                      <span className="font-semibold text-[#0F172A]">{company.name}</span>
+                      <span className="font-semibold text-text-primary">{company.name}</span>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-white/5 text-text-muted">
                         {cProjects.length} {cProjects.length === 1 ? "projeto" : "projetos"}
                       </span>
@@ -353,7 +353,7 @@ export default function ProjectsPage() {
                       >
                         <div className="w-10 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[#0F172A] truncate">{project.name}</p>
+                          <p className="text-sm font-medium text-text-primary truncate">{project.name}</p>
                           <p className="text-[10px] text-text-muted font-mono">{project.code}</p>
                         </div>
                         <ProgramBadge program={project.program} />
@@ -398,7 +398,7 @@ export default function ProjectsPage() {
                 >
                   <TableCell>
                     <div>
-                      <p className="text-sm font-medium text-[#0F172A]">{project.name}</p>
+                      <p className="text-sm font-medium text-text-primary">{project.name}</p>
                       <p className="text-[10px] text-text-muted font-mono">{project.code}</p>
                     </div>
                   </TableCell>

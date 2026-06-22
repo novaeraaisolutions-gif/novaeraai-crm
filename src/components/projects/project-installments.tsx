@@ -153,7 +153,7 @@ export function ProjectInstallments({ projectId, orgId, contractValue, phases }:
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-[#0F172A]">Parcelas do Contrato</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Parcelas do Contrato</h3>
           <p className="text-xs text-text-muted mt-0.5">
             Recebíveis vinculados a etapas do projeto (50/50 ou customizado)
           </p>
@@ -169,7 +169,7 @@ export function ProjectInstallments({ projectId, orgId, contractValue, phases }:
         <div className="grid grid-cols-3 gap-4 mb-4 pb-4 border-b border-border">
           <div>
             <p className="text-xs text-text-muted">Total Contratado</p>
-            <p className="text-lg font-bold text-[#0F172A]">{formatCurrency(total)}</p>
+            <p className="text-lg font-bold text-text-primary">{formatCurrency(total)}</p>
           </div>
           <div>
             <p className="text-xs text-text-muted">Recebido</p>
@@ -352,7 +352,7 @@ function InstallmentRow({
     <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-medium text-[#0F172A]">{installment.description}</p>
+          <p className="text-sm font-medium text-text-primary">{installment.description}</p>
           <span
             className="rounded-full px-2 py-0.5 text-[10px] font-medium"
             style={{ background: `${meta.color}20`, color: meta.color }}
@@ -375,7 +375,7 @@ function InstallmentRow({
           {installment.paid_at && ` • Pago em ${formatDate(installment.paid_at)}`}
         </p>
       </div>
-      <p className="text-sm font-semibold text-[#0F172A] whitespace-nowrap">
+      <p className="text-sm font-semibold text-text-primary whitespace-nowrap">
         {formatCurrency(Number(installment.amount))}
       </p>
       {installment.status === "pago" ? (

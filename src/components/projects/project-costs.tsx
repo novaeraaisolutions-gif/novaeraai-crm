@@ -122,7 +122,7 @@ export function ProjectCosts({ projectId, orgId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-[#0F172A]">Custos do Projeto</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Custos do Projeto</h3>
           <p className="text-xs text-text-muted mt-0.5">
             Implementação (one-time), mensal recorrente e eventual
           </p>
@@ -167,7 +167,7 @@ export function ProjectCosts({ projectId, orgId }: Props) {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-medium text-[#0F172A] truncate">{c.description}</p>
+                      <p className="text-sm font-medium text-text-primary truncate">{c.description}</p>
                       <span
                         className="rounded-full px-2 py-0.5 text-[10px] font-medium"
                         style={{ background: `${typeMeta.color}20`, color: typeMeta.color }}
@@ -178,7 +178,7 @@ export function ProjectCosts({ projectId, orgId }: Props) {
                         {COST_CATEGORY_META[c.category].label}
                       </span>
                       {product && (
-                        <span className="text-[10px] text-[#0B87C3]">⟶ {product.name}</span>
+                        <span className="text-[10px] text-primary">⟶ {product.name}</span>
                       )}
                     </div>
                     <p className="text-xs text-text-muted mt-0.5">
@@ -188,7 +188,7 @@ export function ProjectCosts({ projectId, orgId }: Props) {
                       </span>
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-[#0F172A] whitespace-nowrap">
+                  <p className="text-sm font-semibold text-text-primary whitespace-nowrap">
                     {formatCurrency(Number(c.amount))}
                   </p>
                   <button

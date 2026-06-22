@@ -83,7 +83,7 @@ export function ProjectIdentification({ project }: Props) {
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-[#0F172A]">Identificação e Contexto</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Identificação e Contexto</h3>
           <p className="text-xs text-text-muted mt-0.5">
             Quem é o cliente, quem fechou e quem desenvolve
           </p>
@@ -236,7 +236,7 @@ function Field({
       <Icon size={14} className="text-text-muted mt-0.5 shrink-0" />
       <div className="min-w-0">
         <p className="text-[10px] text-text-muted uppercase tracking-wider">{label}</p>
-        <p className={`text-sm font-medium text-[#0F172A] ${mono ? "font-mono" : ""}`}>{value}</p>
+        <p className={`text-sm font-medium text-text-primary ${mono ? "font-mono" : ""}`}>{value}</p>
       </div>
     </div>
   );

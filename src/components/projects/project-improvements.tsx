@@ -106,7 +106,7 @@ export function ProjectImprovements({ projectId, orgId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-[#0F172A]">Melhorias do Projeto</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Melhorias do Projeto</h3>
           <p className="text-xs text-text-muted mt-0.5">
             Anotações para próximas melhorias por produto ou do projeto
           </p>
@@ -132,8 +132,8 @@ export function ProjectImprovements({ projectId, orgId }: Props) {
               onClick={() => setFilter(opt.value)}
               className={`text-xs px-3 py-1 rounded-full border transition-colors ${
                 filter === opt.value
-                  ? "border-[#0B87C3] text-[#0B87C3] bg-[#0B87C3]/10"
-                  : "border-border text-text-muted hover:border-[#0B87C3]/30"
+                  ? "border-[#0B87C3] text-primary bg-[#0B87C3]/10"
+                  : "border-border text-text-muted hover:border-primary/30"
               }`}
             >
               {opt.label}
@@ -168,7 +168,7 @@ export function ProjectImprovements({ projectId, orgId }: Props) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="text-sm font-semibold text-[#0F172A]">{imp.title}</p>
+                      <p className="text-sm font-semibold text-text-primary">{imp.title}</p>
                       <span
                         className="rounded-full px-2 py-0.5 text-[10px] font-medium"
                         style={{ background: `${statusMeta.color}20`, color: statusMeta.color }}
@@ -193,7 +193,7 @@ export function ProjectImprovements({ projectId, orgId }: Props) {
                         </span>
                       )}
                       {product && (
-                        <span className="text-[10px] text-[#0B87C3]">⟶ {product.name}</span>
+                        <span className="text-[10px] text-primary">⟶ {product.name}</span>
                       )}
                     </div>
                     {imp.description && (

@@ -74,7 +74,7 @@ function InfoDetailRow({
       <p className="text-xs font-semibold uppercase tracking-wider text-text-muted w-28 flex-shrink-0 mt-0.5">
         {label}
       </p>
-      <div className="text-sm text-[#0F172A] flex-1">{value}</div>
+      <div className="text-sm text-text-primary flex-1">{value}</div>
     </div>
   );
 }
@@ -113,7 +113,7 @@ export default function ContactDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <Users size={48} className="text-text-muted mb-4" />
-        <h2 className="text-lg font-semibold text-[#0F172A] mb-2">Contato não encontrado</h2>
+        <h2 className="text-lg font-semibold text-text-primary mb-2">Contato não encontrado</h2>
         <p className="text-sm text-text-muted mb-6">
           O contato que você está procurando não existe ou foi removido.
         </p>
@@ -148,7 +148,7 @@ export default function ContactDetailPage() {
           </div>
 
           <div>
-            <h1 className="font-bold text-2xl text-[#0F172A] leading-tight">
+            <h1 className="font-bold text-2xl text-text-primary leading-tight">
               {contact.full_name}
             </h1>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -253,7 +253,7 @@ export default function ContactDetailPage() {
             {/* Leads */}
             <TabsContent value="leads" className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[#0F172A]">
+                <h3 className="text-sm font-semibold text-text-primary">
                   Leads ({leads?.length ?? 0})
                 </h3>
               </div>
@@ -300,7 +300,7 @@ export default function ContactDetailPage() {
                           onClick={() => router.push(`/leads/${lead.id}`)}
                         >
                           <td className="py-3 pr-4">
-                            <p className="font-medium text-[#0F172A]">{lead.title}</p>
+                            <p className="font-medium text-text-primary">{lead.title}</p>
                             <p className="text-xs text-text-muted">
                               {formatDate(lead.created_at)}
                             </p>
@@ -337,7 +337,7 @@ export default function ContactDetailPage() {
                               <span className="text-text-muted">—</span>
                             )}
                           </td>
-                          <td className="py-3 pr-4 text-[#0F172A]">
+                          <td className="py-3 pr-4 text-text-primary">
                             {lead.value ? formatCurrency(lead.value) : "—"}
                           </td>
                           <td className="py-3">
@@ -365,7 +365,7 @@ export default function ContactDetailPage() {
             {/* Projetos */}
             <TabsContent value="projetos" className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[#0F172A]">
+                <h3 className="text-sm font-semibold text-text-primary">
                   Projetos ({projects?.length ?? 0})
                 </h3>
                 {contact.company_id && (
@@ -411,7 +411,7 @@ export default function ContactDetailPage() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <p className="text-sm font-medium text-[#0F172A] truncate">{project.name}</p>
+                              <p className="text-sm font-medium text-text-primary truncate">{project.name}</p>
                               <span
                                 className="rounded-md px-2 py-0.5 text-xs font-medium flex-shrink-0"
                                 style={{ background: `${statusMeta.color}20`, color: statusMeta.color }}
@@ -472,7 +472,7 @@ export default function ContactDetailPage() {
                     contact.phone ? (
                       <a
                         href={`tel:${contact.phone}`}
-                        className="text-[#0F172A] hover:text-[#0B87C3] flex items-center gap-1"
+                        className="text-text-primary hover:text-[#0B87C3] flex items-center gap-1"
                       >
                         <Phone size={13} />
                         {contact.phone}
@@ -545,14 +545,14 @@ export default function ContactDetailPage() {
         <div className="space-y-4">
           {/* Quick actions */}
           <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="text-sm font-semibold text-[#0F172A] mb-3">Ações Rápidas</h3>
+            <h3 className="text-sm font-semibold text-text-primary mb-3">Ações Rápidas</h3>
             <div className="space-y-2">
               {contact.phone && (
                 <a
                   href={`https://wa.me/${contact.phone.replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-[#0F172A] transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-text-primary transition-colors"
                 >
                   <MessageCircle size={15} className="text-emerald-500" />
                   WhatsApp
@@ -561,7 +561,7 @@ export default function ContactDetailPage() {
               {contact.email && (
                 <a
                   href={`mailto:${contact.email}`}
-                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-[#0F172A] transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-text-primary transition-colors"
                 >
                   <Mail size={15} className="text-blue-500" />
                   Enviar E-mail
@@ -572,7 +572,7 @@ export default function ContactDetailPage() {
                   href={contact.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-[#0F172A] transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border hover:bg-white/5 text-sm text-text-primary transition-colors"
                 >
                   <ExternalLink size={15} className="text-blue-700" />
                   LinkedIn
@@ -588,11 +588,11 @@ export default function ContactDetailPage() {
 
           {/* Info card */}
           <div className="rounded-xl border border-border bg-card p-6 space-y-3">
-            <h3 className="text-sm font-semibold text-[#0F172A]">Informações</h3>
+            <h3 className="text-sm font-semibold text-text-primary">Informações</h3>
             <div className="text-sm space-y-2">
               <div>
                 <p className="text-xs text-text-muted mb-0.5">Cadastrado em</p>
-                <p className="text-[#0F172A]">{formatDate(contact.created_at)}</p>
+                <p className="text-text-primary">{formatDate(contact.created_at)}</p>
               </div>
               {contact.company_id && (
                 <div>
@@ -606,7 +606,7 @@ export default function ContactDetailPage() {
           {/* Tags */}
           {contact.tags && contact.tags.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="text-sm font-semibold text-[#0F172A] mb-3">Tags</h3>
+              <h3 className="text-sm font-semibold text-text-primary mb-3">Tags</h3>
               <div className="flex flex-wrap gap-1.5">
                 {contact.tags.map((tag) => (
                   <Badge key={tag} variant="secondary" className="text-xs">

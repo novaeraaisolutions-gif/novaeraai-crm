@@ -69,7 +69,7 @@ export function ProjectsKanban({ projects, onCardClick, orgUsers }: Props) {
                           className="w-2 h-2 rounded-full flex-shrink-0"
                           style={{ background: meta.color }}
                         />
-                        <h4 className="text-sm font-semibold text-[#0F172A] truncate">
+                        <h4 className="text-sm font-semibold text-text-primary truncate">
                           {meta.label}
                         </h4>
                       </div>
@@ -147,7 +147,7 @@ function ProjectCard({
   return (
     <div>
       <div className="flex items-start justify-between gap-2 mb-1">
-        <p className="text-sm font-semibold text-[#0F172A] line-clamp-2">{project.name}</p>
+        <p className="text-sm font-semibold text-text-primary line-clamp-2">{project.name}</p>
       </div>
       <p className="text-[10px] text-text-muted font-mono mb-2">{project.code}</p>
 
@@ -163,7 +163,7 @@ function ProjectCard({
           {project.contract_value && (
             <div className="text-xs">
               <span className="text-text-muted">Contrato: </span>
-              <span className="font-semibold text-[#0F172A]">
+              <span className="font-semibold text-text-primary">
                 {formatCurrency(Number(project.contract_value))}
               </span>
             </div>

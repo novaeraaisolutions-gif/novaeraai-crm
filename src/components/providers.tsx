@@ -9,7 +9,11 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30 * 1000, // 30s default
+            // staleTime alto causava dados velhos após criar/editar
+            // (ex: tarefa criada não aparecia em /tasks até refresh manual).
+            // Com 0 + refetchOnMount "always", toda navegação refaz a query.
+            staleTime: 0,
+            refetchOnMount: "always",
             retry: 1,
           },
         },

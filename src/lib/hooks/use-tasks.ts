@@ -115,21 +115,28 @@ export const useCreateTask = () => {
   return useMutation({
     mutationFn: async (input: TaskInsert) => {
       const { data, error } = await supabase.from("tasks").insert(input).select().single();
-      if (error) throw error;
+      if (error) {
+        console.error("[useCreateTask] insert error:", error);
+        throw error;
+      }
       return data;
     },
-    onSuccess: () => {
-      // Invalida tudo que depende de tasks: lista geral, por lead, por projeto,
-      // resumo de contato dos cards do kanban, e atividades (caso DB trigger
-      // crie activity automaticamente).
-      qc.invalidateQueries({ queryKey: ["tasks"] });
-      qc.invalidateQueries({ queryKey: ["leads-contact-summary"] });
-      qc.invalidateQueries({ queryKey: ["activities"] });
+    onSuccess: async (data) => {
+      console.log("[useCreateTask] criada:", data);
+      // refetchQueries força a busca imediatamente (não só marca stale).
+      // Resolve o caso em que o user já estava em /tasks ou /calendar com
+      // cache fresh (staleTime 30s) e a query não refazia sozinha.
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ["tasks"], type: "all" }),
+        qc.refetchQueries({ queryKey: ["leads-contact-summary"], type: "all" }),
+        qc.refetchQueries({ queryKey: ["activities"], type: "all" }),
+      ]);
       toast.success("Tarefa criada!");
     },
-    onError: (err) => {
-      console.error(err);
-      toast.error("Erro ao criar tarefa");
+    onError: (err: Error & { message?: string; code?: string }) => {
+      console.error("[useCreateTask] error:", err);
+      const msg = err?.message ?? "Erro ao criar tarefa";
+      toast.error(`Erro ao criar tarefa: ${msg}`);
     },
   });
 };
@@ -142,10 +149,12 @@ export const useUpdateTask = () => {
       const { error } = await supabase.from("tasks").update(data).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["tasks"] });
-      qc.invalidateQueries({ queryKey: ["leads-contact-summary"] });
-      qc.invalidateQueries({ queryKey: ["activities"] });
+    onSuccess: async () => {
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ["tasks"], type: "all" }),
+        qc.refetchQueries({ queryKey: ["leads-contact-summary"], type: "all" }),
+        qc.refetchQueries({ queryKey: ["activities"], type: "all" }),
+      ]);
       toast.success("Tarefa atualizada!");
     },
     onError: () => toast.error("Erro ao atualizar tarefa"),

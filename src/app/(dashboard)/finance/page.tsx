@@ -19,6 +19,7 @@ import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { useRevenues, useExpenses, useRevenuesLastMonths, useExpensesLastMonths, useDeleteRevenue, useDeleteExpense, useUpdateRevenue, useUpdateExpense, useCreateRevenue, useCreateExpense, useTotalRevenues, type Revenue, type Expense } from "@/lib/hooks/use-finance";
 import { useAllInstallments, useMarkInstallmentPaid, INSTALLMENT_STATUS_META } from "@/lib/hooks/use-installments";
+import { useActiveSubscriptions, useEnsureMonthlyBilling, nextBillingDate, RENEWAL_LABEL } from "@/lib/hooks/use-subscriptions";
 import { useUser } from "@/lib/hooks/use-user";
 import Link from "next/link";
 
@@ -80,7 +81,10 @@ export default function FinancePage() {
   const [expRecurrence, setExpRecurrence] = useState<"pontual" | "mensal" | "trimestral" | "anual">("pontual");
 
   const { user } = useUser();
+  useEnsureMonthlyBilling();
   const { data: totalRevenuesAllTime = 0 } = useTotalRevenues();
+  const { data: activeSubscriptions = [], isLoading: subscriptionsLoading } = useActiveSubscriptions();
+  const totalMonthlyRecurring = activeSubscriptions.reduce((s, p) => s + Number(p.billing_amount ?? 0), 0);
   const { data: revenues = [], isLoading: revLoading } = useRevenues(year, month);
   const { data: expenses = [], isLoading: expLoading } = useExpenses(year, month);
   const { data: revenuesLastMonths = {} } = useRevenuesLastMonths(year, month, 6);
@@ -205,8 +209,9 @@ export default function FinancePage() {
       </div>
 
       {/* Faturamento Total (sem período) */}
-      <div className="grid grid-cols-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard label="Faturamento Total (todos os períodos)" value={formatCurrency(totalRevenuesAllTime)} icon={Wallet} />
+        <StatCard label={`Mensalidades Ativas (${activeSubscriptions.length})`} value={formatCurrency(totalMonthlyRecurring)} icon={TrendingUp} />
       </div>
 
       {/* KPI Cards (mês selecionado) */}
@@ -335,9 +340,73 @@ export default function FinancePage() {
       <Tabs defaultValue="receivables">
         <TabsList>
           <TabsTrigger value="receivables">Recebíveis ({installmentsPending.length})</TabsTrigger>
+          <TabsTrigger value="subscriptions">Mensalidades Ativas ({activeSubscriptions.length})</TabsTrigger>
           <TabsTrigger value="revenues">Receitas ({revenues.length})</TabsTrigger>
           <TabsTrigger value="expenses">Despesas ({expenses.length})</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="subscriptions" className="mt-4">
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.12)" }}
+          >
+            {subscriptionsLoading ? (
+              <div className="p-8 text-center text-sm" style={{ color: "#7BA3C6" }}>Carregando...</div>
+            ) : activeSubscriptions.length === 0 ? (
+              <div className="p-8 text-center text-sm" style={{ color: "#3D5A78" }}>
+                Nenhuma mensalidade ativa. Mova um projeto para <b>Ativo - Mensalidade</b> no Kanban para começar.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow style={{ borderColor: "rgba(11,135,195,0.1)" }}>
+                    <TableHead style={{ color: "#7BA3C6" }}>Projeto</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Empresa</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Valor Mensal</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Dia de Cobrança</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Próxima Cobrança</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Início do Contrato</TableHead>
+                    <TableHead style={{ color: "#7BA3C6" }}>Renovação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeSubscriptions.map((sub) => {
+                    const next = nextBillingDate(sub.billing_day);
+                    return (
+                      <TableRow key={sub.id} style={{ borderColor: "rgba(11,135,195,0.06)" }}>
+                        <TableCell className="text-sm" style={{ color: "#E2EBF8" }}>
+                          <Link href={`/projects/${sub.id}?tab=financeiro`} className="hover:underline text-[#0B87C3]">
+                            {sub.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-sm" style={{ color: "#7BA3C6" }}>
+                          {sub.company?.name ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm font-semibold text-green-400">
+                            {formatCurrency(Number(sub.billing_amount ?? 0))}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm" style={{ color: "#7BA3C6" }}>
+                          {sub.billing_day ? `Dia ${sub.billing_day}` : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm" style={{ color: "#E2EBF8" }}>
+                          {next ? formatDate(next.toISOString()) : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm" style={{ color: "#7BA3C6" }}>
+                          {sub.contract_start ? formatDate(sub.contract_start) : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm" style={{ color: "#7BA3C6" }}>
+                          {RENEWAL_LABEL[sub.renewal_type ?? "manual"]}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </TabsContent>
 
         <TabsContent value="receivables" className="mt-4">
           <div

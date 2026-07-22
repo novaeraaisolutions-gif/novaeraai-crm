@@ -497,7 +497,7 @@ export interface Database {
           category: "assinatura" | "consultoria" | "projeto" | "workshop" | "outro";
           installment: string | null;
           auto_generated: boolean;
-          auto_source: "project_receivable" | "project_received" | null;
+          auto_source: "project_receivable" | "project_received" | "project_monthly_billing" | null;
           created_at: string;
           updated_at: string;
         };

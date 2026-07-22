@@ -235,6 +235,8 @@ export interface Database {
           contract_value: number | null;
           receivable_value: number | null;
           receivable_due_date: string | null;
+          received_value: number | null;
+          received_date: string | null;
           progress: number;
           description: string | null;
           tags: string[];
@@ -495,6 +497,7 @@ export interface Database {
           category: "assinatura" | "consultoria" | "projeto" | "workshop" | "outro";
           installment: string | null;
           auto_generated: boolean;
+          auto_source: "project_receivable" | "project_received" | null;
           created_at: string;
           updated_at: string;
         };

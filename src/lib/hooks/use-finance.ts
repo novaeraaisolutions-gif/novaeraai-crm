@@ -70,7 +70,7 @@ export const useTotalRevenues = () => {
   return useQuery({
     queryKey: ["revenues", "total"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("revenues").select("value");
+      const { data, error } = await supabase.from("revenues").select("value").eq("status", "pago");
       if (error) throw error;
       return (data ?? []).reduce((sum, r) => sum + Number(r.value), 0);
     },

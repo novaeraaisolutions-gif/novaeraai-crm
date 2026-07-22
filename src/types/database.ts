@@ -233,6 +233,8 @@ export interface Database {
           expected_end_date: string | null;
           end_date: string | null;
           contract_value: number | null;
+          receivable_value: number | null;
+          receivable_due_date: string | null;
           progress: number;
           description: string | null;
           tags: string[];
@@ -483,7 +485,7 @@ export interface Database {
           contact_id: string | null;
           proposal_id: string | null;
           project_id: string | null;
-          business_unit: "labs" | "advisory" | "enterprise";
+          business_unit: "labs" | "advisory" | "enterprise" | "intelligence";
           value: number;
           due_date: string | null;
           paid_at: string | null;
@@ -492,10 +494,11 @@ export interface Database {
           recurrence: "pontual" | "mensal" | "trimestral" | "anual";
           category: "assinatura" | "consultoria" | "projeto" | "workshop" | "outro";
           installment: string | null;
+          auto_generated: boolean;
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["revenues"]["Row"], "id" | "created_at" | "updated_at">;
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["revenues"]["Row"], "id" | "created_at" | "updated_at" | "auto_generated">> & { auto_generated?: boolean };
         Update: Partial<Database["public"]["Tables"]["revenues"]["Insert"]>;
         Relationships: [];
       };

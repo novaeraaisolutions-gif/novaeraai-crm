@@ -40,6 +40,8 @@ const projectSchema = z.object({
   expected_end_date: z.string().optional(),
   contract_value: z.string().optional(),
   billing_amount: z.string().optional(),
+  receivable_value: z.string().optional(),
+  receivable_due_date: z.string().optional(),
   description: z.string().optional(),
   tags: z.string().optional(),
   // V2
@@ -97,6 +99,8 @@ export const ProjectForm = ({ open, onClose, project }: ProjectFormProps) => {
         expected_end_date: project.expected_end_date ?? "",
         contract_value: project.contract_value?.toString() ?? "",
         billing_amount: project.billing_amount?.toString() ?? "",
+        receivable_value: project.receivable_value?.toString() ?? "",
+        receivable_due_date: project.receivable_due_date ?? "",
         description: project.description ?? "",
         tags: project.tags?.join(", ") ?? "",
         niche: project.niche ?? "",
@@ -146,6 +150,8 @@ export const ProjectForm = ({ open, onClose, project }: ProjectFormProps) => {
       expected_end_date: values.expected_end_date || null,
       contract_value: values.contract_value ? parseFloat(values.contract_value) : null,
       billing_amount: values.billing_amount ? parseFloat(values.billing_amount) : null,
+      receivable_value: values.receivable_value ? parseFloat(values.receivable_value) : null,
+      receivable_due_date: values.receivable_due_date || null,
       description: values.description || null,
       tags,
       progress: project?.progress ?? 0,
@@ -280,6 +286,23 @@ export const ProjectForm = ({ open, onClose, project }: ProjectFormProps) => {
                 {...register("billing_amount")}
                 placeholder="0,00"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="receivable_value">Valor a Receber (R$)</Label>
+              <Input
+                id="receivable_value"
+                type="number"
+                step="0.01"
+                {...register("receivable_value")}
+                placeholder="0,00"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="receivable_due_date">Data de Recebimento</Label>
+              <Input id="receivable_due_date" type="date" {...register("receivable_due_date")} />
             </div>
           </div>
 

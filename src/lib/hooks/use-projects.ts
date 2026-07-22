@@ -94,6 +94,7 @@ export const useCreateProject = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["projects"] });
+      qc.invalidateQueries({ queryKey: ["revenues"] });
       toast.success("Projeto criado!");
     },
     onError: () => toast.error("Erro ao criar projeto"),
@@ -111,6 +112,7 @@ export const useUpdateProject = () => {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       qc.invalidateQueries({ queryKey: ["project", vars.id] });
+      qc.invalidateQueries({ queryKey: ["revenues"] });
       toast.success("Projeto atualizado!");
     },
     onError: () => toast.error("Erro ao atualizar projeto"),

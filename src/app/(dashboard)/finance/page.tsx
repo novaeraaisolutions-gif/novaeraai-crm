@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, TrendingUp, TrendingDown, DollarSign, Trash2 } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, Trash2, Wallet } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
-import { useRevenues, useExpenses, useRevenuesLastMonths, useExpensesLastMonths, useDeleteRevenue, useDeleteExpense, useUpdateRevenue, useUpdateExpense, useCreateRevenue, useCreateExpense, type Revenue, type Expense } from "@/lib/hooks/use-finance";
+import { useRevenues, useExpenses, useRevenuesLastMonths, useExpensesLastMonths, useDeleteRevenue, useDeleteExpense, useUpdateRevenue, useUpdateExpense, useCreateRevenue, useCreateExpense, useTotalRevenues, type Revenue, type Expense } from "@/lib/hooks/use-finance";
 import { useAllInstallments, useMarkInstallmentPaid, INSTALLMENT_STATUS_META } from "@/lib/hooks/use-installments";
 import { useUser } from "@/lib/hooks/use-user";
 import Link from "next/link";
@@ -80,6 +80,7 @@ export default function FinancePage() {
   const [expRecurrence, setExpRecurrence] = useState<"pontual" | "mensal" | "trimestral" | "anual">("pontual");
 
   const { user } = useUser();
+  const { data: totalRevenuesAllTime = 0 } = useTotalRevenues();
   const { data: revenues = [], isLoading: revLoading } = useRevenues(year, month);
   const { data: expenses = [], isLoading: expLoading } = useExpenses(year, month);
   const { data: revenuesLastMonths = {} } = useRevenuesLastMonths(year, month, 6);
@@ -203,7 +204,12 @@ export default function FinancePage() {
         </Select>
       </div>
 
-      {/* KPI Cards */}
+      {/* Faturamento Total (sem período) */}
+      <div className="grid grid-cols-1">
+        <StatCard label="Faturamento Total (todos os períodos)" value={formatCurrency(totalRevenuesAllTime)} icon={Wallet} />
+      </div>
+
+      {/* KPI Cards (mês selecionado) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Receitas (mês)" value={formatCurrency(totalRevenues)} icon={TrendingUp} />
         <StatCard label="Despesas (mês)" value={formatCurrency(totalExpenses)} icon={TrendingDown} />

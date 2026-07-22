@@ -65,6 +65,18 @@ export const useRevenues = (year?: number, month?: number) => {
   });
 };
 
+export const useTotalRevenues = () => {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["revenues", "total"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("revenues").select("value");
+      if (error) throw error;
+      return (data ?? []).reduce((sum, r) => sum + Number(r.value), 0);
+    },
+  });
+};
+
 export const useExpenses = (year?: number, month?: number) => {
   const supabase = createClient();
   return useQuery({

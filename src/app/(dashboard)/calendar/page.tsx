@@ -23,6 +23,7 @@ import {
 import { useUser, useOrgUsers } from "@/lib/hooks/use-user";
 import { useLeads } from "@/lib/hooks/use-leads";
 import { useContacts } from "@/lib/hooks/use-contacts";
+import { useProjects } from "@/lib/hooks/use-projects";
 import { formatDate } from "@/lib/utils/format";
 
 const MONTHS = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
@@ -144,6 +145,7 @@ export default function CalendarPage() {
   const { data: orgUsers = [] } = useOrgUsers();
   const { data: leads = [] } = useLeads();
   const { data: contacts = [] } = useContacts();
+  const { data: projects = [] } = useProjects();
 
   // ── AGENDA COMERCIAL state ──
   const [comYear, setComYear] = useState(now.getFullYear());
@@ -158,10 +160,19 @@ export default function CalendarPage() {
   const [newDuration, setNewDuration] = useState("60");
   const [newNotes, setNewNotes] = useState("");
   const [newParticipants, setNewParticipants] = useState<string[]>([]);
+  const [newProjectId, setNewProjectId] = useState("__none__");
 
   const { data: events = [] } = useEvents({ month: comMonth, year: comYear });
   const createEvent = useCreateEvent();
   const deleteEvent = useDeleteEvent();
+
+  // ── AGENDA PROJETOS state ──
+  const [projYear, setProjYear] = useState(now.getFullYear());
+  const [projMonth, setProjMonth] = useState(now.getMonth());
+  const [projSelectedDay, setProjSelectedDay] = useState<number | null>(null);
+
+  const { data: projMonthEvents = [] } = useEvents({ month: projMonth, year: projYear });
+  const projEvents = projMonthEvents.filter((e) => !!e.project_id);
 
   // ── AGENDA FOLLOW-UP state ──
   const [fuYear, setFuYear] = useState(now.getFullYear());
@@ -194,6 +205,18 @@ export default function CalendarPage() {
     const dateStr = toDateStr(comYear, comMonth, day);
     const evs = events.filter((e) => e.start_at.startsWith(dateStr));
     const tsks = allTasks.filter((t) => t.due_date?.startsWith(dateStr));
+    return [
+      ...evs.map((e) => ({ color: TYPE_COLOR[e.type] ?? "#3D5A78", label: e.title })),
+      ...tsks.map((t) => ({ color: "#f59e0b", label: `✓ ${t.title}` })),
+    ];
+  };
+
+  // Projetos dots
+  const projTasksAll = allTasks.filter((t) => !!t.project_id);
+  const projDots = (day: number) => {
+    const dateStr = toDateStr(projYear, projMonth, day);
+    const evs = projEvents.filter((e) => e.start_at.startsWith(dateStr));
+    const tsks = projTasksAll.filter((t) => t.due_date?.startsWith(dateStr));
     return [
       ...evs.map((e) => ({ color: TYPE_COLOR[e.type] ?? "#3D5A78", label: e.title })),
       ...tsks.map((t) => ({ color: "#f59e0b", label: `✓ ${t.title}` })),
@@ -278,17 +301,21 @@ export default function CalendarPage() {
       agenda: newNotes || null,
       org_id: user?.org_id ?? "",
       created_by: user?.id ?? "",
-      lead_id: null, project_id: null, contact_id: null,
+      lead_id: null,
+      project_id: newProjectId !== "__none__" ? newProjectId : null,
+      contact_id: null,
       participant_ids: newParticipants,
       meeting_url: null, result: null,
     });
     setComFormOpen(false);
     setNewTitle(""); setNewType("demo"); setNewTime(""); setNewDuration("60");
-    setNewNotes(""); setNewParticipants([]);
+    setNewNotes(""); setNewParticipants([]); setNewProjectId("__none__");
   };
 
   const comDayEvents = comSelectedDay ? events.filter((e) => e.start_at.startsWith(toDateStr(comYear, comMonth, comSelectedDay))) : [];
   const comDayTasks = comSelectedDay ? allTasks.filter((t) => t.due_date?.startsWith(toDateStr(comYear, comMonth, comSelectedDay))) : [];
+  const projDayEvents = projSelectedDay ? projEvents.filter((e) => e.start_at.startsWith(toDateStr(projYear, projMonth, projSelectedDay))) : [];
+  const projDayTasks = projSelectedDay ? projTasksAll.filter((t) => t.due_date?.startsWith(toDateStr(projYear, projMonth, projSelectedDay))) : [];
   const fuDayTasks = fuSelectedDay ? allFollowUps.filter((t) => t.due_date?.startsWith(toDateStr(fuYear, fuMonth, fuSelectedDay))) : [];
   const pendingFuCount = allFollowUps.filter((t) => t.status === "pendente" || t.status === "em_andamento").length;
 
@@ -315,6 +342,10 @@ export default function CalendarPage() {
                 {pendingFuCount}
               </span>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="projetos" className="data-[state=active]:bg-primary data-[state=active]:text-white gap-1.5">
+            <Briefcase size={14} />
+            Agenda Projetos
           </TabsTrigger>
         </TabsList>
 
@@ -556,6 +587,141 @@ export default function CalendarPage() {
             </div>
           </div>
         </TabsContent>
+
+        {/* ─── ABA: AGENDA PROJETOS ─── */}
+        <TabsContent value="projetos">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm" style={{ color: "#7BA3C6" }}>
+              {projEvents.length} evento{projEvents.length !== 1 ? "s" : ""} de projetos em {MONTHS[projMonth]}
+            </p>
+            <Button
+              onClick={() => {
+                setNewType("kickoff");
+                setNewProjectId("__none__");
+                setComFormOpen(true);
+                setNewDate(toDateStr(projYear, projMonth, projSelectedDay ?? now.getDate()));
+              }}
+              className="flex items-center gap-2 text-sm font-semibold"
+              style={{ background: "linear-gradient(135deg, #0B87C3, #0CA8F5)", color: "#fff", boxShadow: "0 0 16px rgba(11,135,195,0.3)" }}
+            >
+              <Plus size={15} /> Novo Evento de Projeto
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Calendar */}
+            <div className="lg:col-span-2 rounded-xl overflow-hidden" style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(11,135,195,0.1)" }}>
+                <button onClick={() => { if (projMonth === 0) { setProjMonth(11); setProjYear((y) => y - 1); } else setProjMonth((m) => m - 1); }} className="p-1.5 rounded-lg hover:bg-white/5">
+                  <ChevronLeft size={18} style={{ color: "#7BA3C6" }} />
+                </button>
+                <h2 className="font-display font-bold text-lg" style={{ color: "#E2EBF8" }}>{MONTHS[projMonth]} {projYear}</h2>
+                <button onClick={() => { if (projMonth === 11) { setProjMonth(0); setProjYear((y) => y + 1); } else setProjMonth((m) => m + 1); }} className="p-1.5 rounded-lg hover:bg-white/5">
+                  <ChevronRight size={18} style={{ color: "#7BA3C6" }} />
+                </button>
+              </div>
+              <div className="grid grid-cols-7 border-b" style={{ borderColor: "rgba(11,135,195,0.08)" }}>
+                {DAYS.map((d) => (
+                  <div key={d} className="py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#3D5A78" }}>{d}</div>
+                ))}
+              </div>
+              <CalendarGrid
+                viewYear={projYear} viewMonth={projMonth} selectedDay={projSelectedDay}
+                onDayClick={(day) => setProjSelectedDay(day)}
+                getDayDots={projDots}
+                isToday={(d) => isToday(projYear, projMonth, d)}
+              />
+            </div>
+
+            {/* Side panel */}
+            <div className="space-y-4">
+              <div className="rounded-xl p-5" style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-sm" style={{ color: "#E2EBF8" }}>
+                    {projSelectedDay ? `${projSelectedDay} de ${MONTHS[projMonth]}` : "Selecione um dia"}
+                  </h3>
+                  {projSelectedDay && (
+                    <button
+                      onClick={() => {
+                        setNewType("kickoff");
+                        setNewProjectId("__none__");
+                        setComFormOpen(true);
+                        setNewDate(toDateStr(projYear, projMonth, projSelectedDay));
+                      }}
+                      className="text-xs flex items-center gap-1 px-2 py-1 rounded-lg"
+                      style={{ background: "rgba(11,135,195,0.1)", color: "#0B87C3" }}
+                    >
+                      <Plus size={11} /> Evento
+                    </button>
+                  )}
+                </div>
+                {!projSelectedDay ? (
+                  <div className="text-center py-8">
+                    <Briefcase size={28} className="mx-auto mb-2 opacity-20" style={{ color: "#0B87C3" }} />
+                    <p className="text-xs" style={{ color: "#3D5A78" }}>Clique num dia para ver eventos de projetos</p>
+                  </div>
+                ) : projDayEvents.length === 0 && projDayTasks.length === 0 ? (
+                  <p className="text-xs text-center py-8" style={{ color: "#3D5A78" }}>Sem eventos de projetos neste dia</p>
+                ) : (
+                  <div className="space-y-2">
+                    {projDayEvents.map((ev) => (
+                      <div key={ev.id} className="p-3 rounded-lg cursor-pointer" style={{ background: `${TYPE_COLOR[ev.type] ?? "#3D5A78"}0A`, border: `1px solid ${TYPE_COLOR[ev.type] ?? "#3D5A78"}25` }} onClick={() => setSelectedEvent(ev)}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold" style={{ color: "#E2EBF8" }}>{ev.title}</p>
+                          <button onClick={(e) => { e.stopPropagation(); deleteEvent.mutate(ev.id); }} className="opacity-50 hover:opacity-100">
+                            <X size={11} style={{ color: "#ef4444" }} />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Clock size={10} style={{ color: "#7BA3C6" }} />
+                          <span className="text-[10px]" style={{ color: "#7BA3C6" }}>{ev.start_at.slice(11, 16)}{ev.duration_min ? ` · ${ev.duration_min}min` : ""}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ background: `${TYPE_COLOR[ev.type] ?? "#3D5A78"}20`, color: TYPE_COLOR[ev.type] ?? "#3D5A78" }}>
+                            {EVENT_TYPES.find((t) => t.value === ev.type)?.label ?? ev.type}
+                          </span>
+                          {ev.project && (
+                            <span className="text-[10px] flex items-center gap-1" style={{ color: "#7BA3C6" }}>
+                              <Briefcase size={9} /> {ev.project.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {projDayTasks.map((t) => (
+                      <div key={t.id} className="p-3 rounded-lg" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)" }}>
+                        <p className="text-xs font-semibold" style={{ color: "#E2EBF8" }}>{t.title}</p>
+                        <p className="text-[10px] mt-1" style={{ color: "#f59e0b" }}>
+                          Tarefa — {t.priority}{t.project ? ` · ${t.project.name}` : ""}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Próximos eventos de projetos */}
+              <div className="rounded-xl p-5" style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}>
+                <h3 className="font-semibold text-sm mb-3" style={{ color: "#E2EBF8" }}>Próximos Eventos de Projetos</h3>
+                {projEvents.filter((e) => new Date(e.start_at) >= now).slice(0, 5).length === 0 ? (
+                  <p className="text-xs text-center py-4" style={{ color: "#3D5A78" }}>Nenhum evento futuro</p>
+                ) : (
+                  <div className="space-y-2">
+                    {projEvents.filter((e) => new Date(e.start_at) >= now).slice(0, 5).map((ev) => (
+                      <div key={ev.id} className="flex items-center gap-2.5">
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: TYPE_COLOR[ev.type] ?? "#3D5A78" }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs truncate" style={{ color: "#E2EBF8" }}>{ev.title}</p>
+                          <p className="text-[10px]" style={{ color: "#7BA3C6" }}>
+                            {formatDate(ev.start_at)}{ev.project ? ` · ${ev.project.name}` : ""}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* ─── DIALOG: Novo Evento Comercial ─── */}
@@ -592,6 +758,16 @@ export default function CalendarPage() {
                 <Label>Duração (min)</Label>
                 <Input type="number" min="15" step="15" value={newDuration} onChange={(e) => setNewDuration(e.target.value)} placeholder="60" />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Projeto vinculado (opcional)</Label>
+              <Select value={newProjectId} onValueChange={setNewProjectId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
+                  {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             {orgUsers.length > 0 && (
               <div className="space-y-1.5">

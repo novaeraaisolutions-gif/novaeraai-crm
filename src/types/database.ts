@@ -708,6 +708,28 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["partner_payments"]["Insert"]>;
         Relationships: [];
       };
+      agent_knowledge_messages: {
+        Row: {
+          id: string;
+          org_id: string;
+          agent_id: string;
+          role: "user" | "assistant";
+          content: string;
+          proposal: Json | null;
+          status: "sem_proposta" | "pendente" | "aplicada" | "descartada";
+          applied_block_id: string | null;
+          applied_rule_id: string | null;
+          decided_by: string | null;
+          decided_at: string | null;
+          author_id: string | null;
+          input_tokens: number | null;
+          output_tokens: number | null;
+          created_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agent_knowledge_messages"]["Row"], "id" | "created_at" | "status">> & { status?: "sem_proposta" | "pendente" | "aplicada" | "descartada" };
+        Update: Partial<Database["public"]["Tables"]["agent_knowledge_messages"]["Insert"]>;
+        Relationships: [];
+      };
       agent_runs: {
         Row: {
           id: string;
@@ -895,7 +917,7 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agent_rules"]["Row"], "id" | "created_at" | "updated_at">>;
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agent_rules"]["Row"], "id" | "created_at" | "updated_at" | "active">> & { active?: boolean };
         Update: Partial<Database["public"]["Tables"]["agent_rules"]["Insert"]>;
         Relationships: [];
       };

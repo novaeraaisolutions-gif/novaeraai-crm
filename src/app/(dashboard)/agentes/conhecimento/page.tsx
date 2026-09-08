@@ -1,83 +1,68 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  BookOpen, ArrowLeft, Plus, History, Trash2, Save, X, Eye, AlertTriangle, Lock,
+  ArrowLeft, Send, Check, X, Lock, Loader2, FileEdit, FilePlus, Scale, BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { useAgents, useKnowledgeBases, useAgentRules, estimateTokens } from "@/lib/hooks/use-agents";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  useKnowledgeBases, useKnowledgeBlocks, useBlockVersions,
-  useUpdateKnowledgeBlock, useCreateKnowledgeBlock, useDeleteKnowledgeBlock,
-  estimateTokens, type KnowledgeBlock,
-} from "@/lib/hooks/use-agents";
+  useKnowledgeChat, useSendKnowledgeMessage, useDecideProposal, type Proposal,
+} from "@/lib/hooks/use-knowledge-chat";
 import { useUser } from "@/lib/hooks/use-user";
 import { formatDateTime } from "@/lib/utils/format";
+
+const PROPOSAL_META: Record<string, { icon: typeof FileEdit; label: string; color: string }> = {
+  editar_bloco: { icon: FileEdit, label: "Reescrever conhecimento", color: "#0CA8F5" },
+  criar_bloco: { icon: FilePlus, label: "Adicionar conhecimento", color: "#22c55e" },
+  criar_regra: { icon: Scale, label: "Nova regra de comportamento", color: "#f59e0b" },
+};
 
 export default function ConhecimentoPage() {
   const { user } = useUser();
   const isAdmin = user?.role === "admin";
 
-  const { data: bases = [], isLoading } = useKnowledgeBases();
-  const [selectedKb, setSelectedKb] = useState<string | undefined>();
-  const { data: blocks = [] } = useKnowledgeBlocks(selectedKb);
+  const { data: agents = [] } = useAgents();
+  const { data: bases = [] } = useKnowledgeBases();
+  const { data: rules = [] } = useAgentRules();
 
-  const [editing, setEditing] = useState<KnowledgeBlock | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [draftTitle, setDraftTitle] = useState("");
-  const [draftContent, setDraftContent] = useState("");
-  const [historyFor, setHistoryFor] = useState<KnowledgeBlock | null>(null);
-  const [deleting, setDeleting] = useState<KnowledgeBlock | null>(null);
+  const [agentId, setAgentId] = useState<string | undefined>();
+  const { data: messages = [] } = useKnowledgeChat(agentId);
+  const send = useSendKnowledgeMessage();
+  const decide = useDecideProposal();
 
-  const { data: versions = [] } = useBlockVersions(historyFor?.id);
-  const updateBlock = useUpdateKnowledgeBlock();
-  const createBlock = useCreateKnowledgeBlock();
-  const deleteBlock = useDeleteKnowledgeBlock();
+  const [draft, setDraft] = useState("");
+  const [viewingRules, setViewingRules] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Abre na primeira base assim que a lista chega.
+  const usable = useMemo(() => agents.filter((a) => a.active), [agents]);
+
   useEffect(() => {
-    if (!selectedKb && bases.length) setSelectedKb(bases[0].id);
-  }, [bases, selectedKb]);
+    if (!agentId && usable.length) setAgentId(usable[0].id);
+  }, [usable, agentId]);
 
-  const base = useMemo(() => bases.find((b) => b.id === selectedKb), [bases, selectedKb]);
-  const totalChars = bases.reduce((s, b) => s + b.charCount, 0);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, send.isPending]);
 
-  const openEdit = (b: KnowledgeBlock) => {
-    setDraftTitle(b.title);
-    setDraftContent(b.content);
-    setEditing(b);
-  };
+  const agent = useMemo(() => agents.find((a) => a.id === agentId), [agents, agentId]);
+  const charsByBase = new Map(bases.map((b) => [b.id, b.charCount]));
 
-  const openCreate = () => {
-    setDraftTitle("");
-    setDraftContent("");
-    setCreating(true);
-  };
+  const agentRules = rules.filter((r) => r.agent_id === agentId && r.active);
+  const knowledgeChars = (agent?.knowledge ?? []).reduce(
+    (sum, k) => sum + (charsByBase.get(k.id) ?? 0), 0
+  );
 
-  const handleSave = async () => {
-    if (!user || !draftTitle.trim() || !draftContent.trim()) return;
-    if (editing) {
-      await updateBlock.mutateAsync({
-        id: editing.id, title: draftTitle, content: draftContent, userId: user.id,
-      });
-      setEditing(null);
-    } else if (creating && selectedKb) {
-      await createBlock.mutateAsync({
-        kbId: selectedKb, title: draftTitle, content: draftContent,
-        position: blocks.length, userId: user.id,
-      });
-      setCreating(false);
-    }
+  const submit = async () => {
+    const text = draft.trim();
+    if (!text || !agentId || send.isPending) return;
+    setDraft("");
+    await send.mutateAsync({ agentId, message: text });
   };
 
   if (!isAdmin) {
@@ -95,300 +80,307 @@ export default function ConhecimentoPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <Link
-            href="/agentes"
-            className="text-xs flex items-center gap-1.5 mb-2"
-            style={{ color: "#7BA3C6" }}
-          >
-            <ArrowLeft size={12} /> Agentes
-          </Link>
-          <h1 className="font-display font-bold text-3xl tracking-tight" style={{ color: "#E2EBF8" }}>
-            Conhecimento
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "#7BA3C6" }}>
-            O que os agentes leem. Toda edição vira versão nova, com autor e data.
-          </p>
-        </div>
-        <div
-          className="rounded-lg px-4 py-2.5 text-right"
-          style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}
-        >
-          <p className="font-mono text-lg font-semibold" style={{ color: "#0CA8F5" }}>
-            {estimateTokens(totalChars).toLocaleString("pt-BR")}
-          </p>
-          <p className="text-[10px]" style={{ color: "#3D5A78" }}>tokens no total</p>
-        </div>
+    <div className="space-y-5">
+      <div>
+        <Link href="/agentes" className="text-xs flex items-center gap-1.5 mb-2" style={{ color: "#7BA3C6" }}>
+          <ArrowLeft size={12} /> Agentes
+        </Link>
+        <h1 className="font-display font-bold text-3xl tracking-tight" style={{ color: "#E2EBF8" }}>
+          Conhecimento
+        </h1>
+        <p className="text-sm mt-1" style={{ color: "#7BA3C6" }}>
+          Converse com o agente sobre o que ele sabe. Ele propõe a alteração, você confirma.
+        </p>
       </div>
 
-      {isLoading ? (
-        <div className="p-12 text-center text-sm" style={{ color: "#3D5A78" }}>Carregando...</div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5">
+      {/* seletor de agente — cada um tem a própria conversa e a própria memória */}
+      <div className="flex gap-2 flex-wrap">
+        {usable.map((a) => {
+          const active = a.id === agentId;
+          return (
+            <button
+              key={a.id}
+              onClick={() => setAgentId(a.id)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm transition-colors"
+              style={{
+                background: active ? "rgba(11,135,195,0.12)" : "rgba(12,21,38,0.8)",
+                border: `1px solid ${active ? "rgba(11,135,195,0.35)" : "rgba(11,135,195,0.12)"}`,
+                color: active ? "#E2EBF8" : "#7BA3C6",
+              }}
+            >
+              <span className="w-2 h-2 rounded-full" style={{ background: a.accent }} />
+              {a.name}
+            </button>
+          );
+        })}
+      </div>
 
-          {/* ── bases ── */}
-          <div className="flex flex-col gap-2">
-            {bases.map((b) => {
-              const active = b.id === selectedKb;
-              const empty = b.blockCount === 0;
-              return (
-                <button
-                  key={b.id}
-                  onClick={() => setSelectedKb(b.id)}
-                  className="text-left rounded-lg p-3 transition-colors"
-                  style={{
-                    background: active ? "rgba(11,135,195,0.1)" : "rgba(12,21,38,0.8)",
-                    border: `1px solid ${active ? "rgba(11,135,195,0.35)" : "rgba(11,135,195,0.12)"}`,
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className="font-mono text-[11.5px] truncate"
-                      style={{ color: active ? "#0CA8F5" : "#93B3D2" }}
-                    >
-                      {b.slug}
-                    </span>
-                    <span
-                      className="text-[10px] font-mono flex-shrink-0"
-                      style={{ color: empty ? "#f59e0b" : "#3D5A78" }}
-                    >
-                      {empty ? "vazia" : `${b.blockCount}`}
-                    </span>
-                  </div>
-                  {b.readers.length > 0 ? (
-                    <p className="text-[10.5px] mt-1.5 leading-snug" style={{ color: "#3D5A78" }}>
-                      {b.readers.join(" · ")}
-                    </p>
-                  ) : (
-                    <p className="text-[10.5px] mt-1.5" style={{ color: "#3D5A78" }}>
-                      nenhum agente lê
-                    </p>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+      {agent && (
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-5">
 
-          {/* ── blocos ── */}
-          <div className="flex flex-col gap-4">
-            {base && (
+          {/* ── conversa ── */}
+          <div className="flex flex-col gap-3">
+            {messages.length === 0 && !send.isPending && (
               <div
-                className="rounded-xl p-4 flex items-start justify-between gap-4 flex-wrap"
+                className="rounded-xl p-5 flex flex-col gap-2.5"
                 style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}
               >
-                <div className="flex flex-col gap-1 min-w-0">
-                  <h2 className="font-display font-semibold text-base" style={{ color: "#E2EBF8" }}>
-                    {base.name}
-                  </h2>
-                  {base.description && (
-                    <p className="text-[13px] leading-relaxed" style={{ color: "#7BA3C6" }}>
-                      {base.description}
-                    </p>
-                  )}
-                  <p className="text-[11px] mt-1 font-mono" style={{ color: "#3D5A78" }}>
-                    {base.blockCount} blocos · {estimateTokens(base.charCount).toLocaleString("pt-BR")} tokens
-                    {base.readers.length > 0 && ` · lida por ${base.readers.join(", ")}`}
-                  </p>
-                </div>
-                <Button size="sm" onClick={openCreate} className="flex-shrink-0">
-                  <Plus size={13} className="mr-1.5" /> Novo bloco
-                </Button>
-              </div>
-            )}
-
-            {base && base.blockCount === 0 && (
-              <div
-                className="rounded-xl p-4 flex gap-3"
-                style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.22)" }}
-              >
-                <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
-                <p className="text-[13px] leading-relaxed" style={{ color: "#7BA3C6" }}>
-                  Base vazia. O agente que a lê continua funcionando — ele monta a estrutura e
-                  pergunta os números em vez de inventar. Mas não fecha conta sozinho.
+                <p className="text-sm font-medium" style={{ color: "#E2EBF8" }}>
+                  Diga o que mudou
                 </p>
+                <p className="text-[13px] leading-relaxed" style={{ color: "#7BA3C6" }}>
+                  O {agent.name} conhece tudo o que ele mesmo lê. Escreva a correção em
+                  linguagem normal — ele acha onde aquilo vive e propõe a mudança.
+                </p>
+                <div className="flex flex-col gap-1.5 mt-1">
+                  {[
+                    "O piso de mensalidade mudou para R$ 1.200.",
+                    "Nunca recomende prazo de implementação menor que 45 dias.",
+                    "O que você sabe sobre precificação de manutenção?",
+                  ].map((ex) => (
+                    <button
+                      key={ex}
+                      onClick={() => setDraft(ex)}
+                      className="text-left text-[12.5px] px-3 py-2 rounded-lg"
+                      style={{ background: "rgba(11,135,195,0.05)", border: "1px solid rgba(11,135,195,0.12)", color: "#93B3D2" }}
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
-            {blocks.map((b) => (
+            {messages.map((m) => {
+              const proposal = m.proposal as Proposal | null;
+              const meta = proposal ? PROPOSAL_META[proposal.tipo] : null;
+              const Icon = meta?.icon;
+
+              return (
+                <div key={m.id} className="flex flex-col gap-2">
+                  <div
+                    className={`rounded-xl px-4 py-3 ${m.role === "user" ? "self-end max-w-[88%]" : ""}`}
+                    style={
+                      m.role === "user"
+                        ? { background: "rgba(11,135,195,0.1)", border: "1px solid rgba(11,135,195,0.25)" }
+                        : { background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.12)" }
+                    }
+                  >
+                    <p className="text-[10px] font-mono uppercase tracking-wider mb-1.5" style={{ color: "#3D5A78" }}>
+                      {m.role === "user" ? "Você" : agent.name}
+                    </p>
+                    <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap" style={{ color: m.role === "user" ? "#E2EBF8" : "#C3D4E8" }}>
+                      {m.content}
+                    </p>
+                  </div>
+
+                  {proposal && meta && Icon && (
+                    <div
+                      className="rounded-xl overflow-hidden"
+                      style={{
+                        background: "rgba(12,21,38,0.9)",
+                        border: `1px solid ${m.status === "pendente" ? meta.color + "55" : "rgba(11,135,195,0.12)"}`,
+                      }}
+                    >
+                      <div
+                        className="px-4 py-2.5 flex items-center justify-between gap-3"
+                        style={{ borderBottom: "1px solid rgba(11,135,195,0.1)" }}
+                      >
+                        <span className="text-[12px] font-medium flex items-center gap-2" style={{ color: meta.color }}>
+                          <Icon size={13} /> {meta.label}
+                        </span>
+                        {m.status !== "pendente" && (
+                          <span
+                            className="text-[10px] font-mono px-2 py-0.5 rounded"
+                            style={
+                              m.status === "aplicada"
+                                ? { background: "rgba(34,197,94,0.12)", color: "#22c55e" }
+                                : { background: "rgba(255,255,255,0.04)", color: "#3D5A78" }
+                            }
+                          >
+                            {m.status === "aplicada" ? "aplicada" : "descartada"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="px-4 py-3 flex flex-col gap-2.5">
+                        {proposal.motivo && (
+                          <p className="text-[12.5px] leading-relaxed" style={{ color: "#93B3D2" }}>
+                            {proposal.motivo}
+                          </p>
+                        )}
+                        {proposal.titulo && (
+                          <p className="text-[12px] font-mono" style={{ color: "#7BA3C6" }}>
+                            {proposal.kb_slug ? `${proposal.kb_slug} · ` : ""}{proposal.titulo}
+                          </p>
+                        )}
+                        {proposal.conteudo && (
+                          <div
+                            className="rounded-lg px-3 py-2.5 max-h-52 overflow-y-auto"
+                            style={{ background: "rgba(11,135,195,0.04)", border: "1px solid rgba(11,135,195,0.1)" }}
+                          >
+                            <p className="text-[12px] leading-relaxed whitespace-pre-wrap font-mono" style={{ color: "#7BA3C6" }}>
+                              {proposal.conteudo}
+                            </p>
+                          </div>
+                        )}
+                        {proposal.phase_code && (
+                          <p className="text-[11px] font-mono" style={{ color: "#3D5A78" }}>
+                            vale na fase {proposal.phase_code}
+                          </p>
+                        )}
+                      </div>
+
+                      {m.status === "pendente" && (
+                        <div
+                          className="px-4 py-2.5 flex items-center justify-between gap-3"
+                          style={{ borderTop: "1px solid rgba(11,135,195,0.1)", background: "rgba(11,135,195,0.03)" }}
+                        >
+                          <span className="text-[11px]" style={{ color: "#3D5A78" }}>
+                            Nada muda até você confirmar
+                          </span>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm" variant="outline"
+                              disabled={decide.isPending}
+                              onClick={() => decide.mutate({ messageId: m.id, decision: "descartar", agentId: agent.id })}
+                            >
+                              <X size={12} className="mr-1.5" /> Descartar
+                            </Button>
+                            <Button
+                              size="sm"
+                              disabled={decide.isPending}
+                              onClick={() => decide.mutate({ messageId: m.id, decision: "aplicar", agentId: agent.id })}
+                            >
+                              <Check size={12} className="mr-1.5" /> Aplicar
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {send.isPending && (
               <div
-                key={b.id}
-                className="rounded-xl overflow-hidden"
+                className="rounded-xl px-4 py-3 flex items-center gap-2"
                 style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.12)" }}
               >
-                <div
-                  className="px-4 py-3 flex items-center justify-between gap-3"
-                  style={{ borderBottom: "1px solid rgba(11,135,195,0.1)" }}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <BookOpen size={13} className="flex-shrink-0" style={{ color: "#3D5A78" }} />
-                    <span className="text-sm font-medium truncate" style={{ color: "#E2EBF8" }}>
-                      {b.title}
-                    </span>
-                    <span
-                      className="text-[10px] font-mono px-1.5 py-0.5 rounded flex-shrink-0"
-                      style={{ background: "rgba(11,135,195,0.1)", color: "#0CA8F5" }}
-                    >
-                      v{b.version}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {b.version > 1 && (
-                      <button
-                        onClick={() => setHistoryFor(b)}
-                        title="Histórico de versões"
-                        className="p-1.5 rounded transition-colors"
-                        style={{ color: "#7BA3C6" }}
-                      >
-                        <History size={13} />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => openEdit(b)}
-                      title="Editar"
-                      className="p-1.5 rounded transition-colors"
-                      style={{ color: "#7BA3C6" }}
-                    >
-                      <Eye size={13} />
-                    </button>
-                    <button
-                      onClick={() => setDeleting(b)}
-                      title="Remover"
-                      className="p-1.5 rounded transition-colors"
-                      style={{ color: "#7BA3C6" }}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-                <div className="px-4 py-3">
-                  <p
-                    className="text-[12.5px] leading-relaxed whitespace-pre-wrap"
-                    style={{
-                      color: "#7BA3C6",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 4,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {b.content}
-                  </p>
-                  <p className="text-[10.5px] mt-2 font-mono" style={{ color: "#3D5A78" }}>
-                    {b.content.length.toLocaleString("pt-BR")} caracteres ·{" "}
-                    {estimateTokens(b.content.length).toLocaleString("pt-BR")} tokens
-                  </p>
-                </div>
+                <Loader2 size={12} className="animate-spin" style={{ color: "#0CA8F5" }} />
+                <span className="text-[12.5px]" style={{ color: "#7BA3C6" }}>
+                  {agent.name} está lendo o que sabe...
+                </span>
               </div>
-            ))}
+            )}
+
+            <div ref={bottomRef} />
+
+            <div
+              className="rounded-xl p-3 flex flex-col gap-2 sticky bottom-0"
+              style={{ background: "rgba(12,21,38,0.95)", border: "1px solid rgba(11,135,195,0.15)" }}
+            >
+              <Textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder={`O que mudou no conhecimento do ${agent.name}?`}
+                rows={3}
+                disabled={send.isPending}
+                className="text-[13.5px] resize-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); }
+                }}
+              />
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px]" style={{ color: "#3D5A78" }}>⌘+Enter para enviar</span>
+                <Button size="sm" onClick={submit} disabled={!draft.trim() || send.isPending}>
+                  <Send size={13} className="mr-1.5" /> Enviar
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── o que este agente sabe ── */}
+          <div className="flex flex-col gap-4">
+            <div className="rounded-xl overflow-hidden" style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}>
+              <div className="px-4 py-2.5 text-[10px] font-mono uppercase tracking-wider flex items-center gap-2" style={{ background: "rgba(11,135,195,0.06)", borderBottom: "1px solid rgba(11,135,195,0.1)", color: "#3D5A78" }}>
+                <BookOpen size={11} /> O que ele lê
+              </div>
+              {agent.knowledge.map((k) => {
+                const b = bases.find((x) => x.id === k.id);
+                return (
+                  <div key={k.id} className="px-4 py-2.5 flex items-center justify-between gap-2" style={{ borderBottom: "1px solid rgba(11,135,195,0.08)" }}>
+                    <span className="font-mono text-[11px] truncate" style={{ color: "#93B3D2" }}>{k.slug}</span>
+                    <span className="text-[10.5px] font-mono flex-shrink-0" style={{ color: b?.blockCount ? "#3D5A78" : "#f59e0b" }}>
+                      {b?.blockCount ? `${b.blockCount} blocos` : "vazia"}
+                    </span>
+                  </div>
+                );
+              })}
+              <div className="px-4 py-2.5 flex items-center justify-between">
+                <span className="text-[11px]" style={{ color: "#3D5A78" }}>contexto fixo</span>
+                <span className="text-[11px] font-mono" style={{ color: "#0CA8F5" }}>
+                  {estimateTokens(knowledgeChars + agent.system_prompt.length).toLocaleString("pt-BR")} tokens
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setViewingRules(true)}
+              className="rounded-xl px-4 py-3 flex items-center justify-between gap-2 text-left"
+              style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}
+            >
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[13px]" style={{ color: "#E2EBF8" }}>Regras ativas</span>
+                <span className="text-[11px]" style={{ color: "#3D5A78" }}>
+                  {agentRules.length === 0 ? "nenhuma ainda" : "podem se contradizer — vale revisar"}
+                </span>
+              </div>
+              <span className="text-lg font-mono" style={{ color: agentRules.length ? "#f59e0b" : "#3D5A78" }}>
+                {agentRules.length}
+              </span>
+            </button>
+
+            <div
+              className="rounded-xl p-4"
+              style={{ background: "rgba(11,135,195,0.04)", border: "1px solid rgba(11,135,195,0.12)" }}
+            >
+              <p className="text-[12px] leading-relaxed" style={{ color: "#7BA3C6" }}>
+                Correção aplicada vale na <strong style={{ color: "#93B3D2" }}>próxima geração</strong>.
+                Não há reindexação nem espera. Cada artefato guarda a versão que estava
+                valendo quando foi gerado.
+              </p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── editor ── */}
-      <Dialog
-        open={!!editing || creating}
-        onOpenChange={(v) => { if (!v) { setEditing(null); setCreating(false); } }}
-      >
-        <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-y-auto">
+      <Dialog open={viewingRules} onOpenChange={setViewingRules}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar bloco" : "Novo bloco"}</DialogTitle>
+            <DialogTitle>Regras ativas · {agent?.name}</DialogTitle>
             <DialogDescription>
-              {editing
-                ? `Versão atual v${editing.version}. Salvar guarda a anterior no histórico — nada é sobrescrito.`
-                : "O bloco entra no fim da base. A ordem pode ser ajustada depois."}
+              Entram no prompt depois do conhecimento, e valem sobre ele. Regras que se
+              contradizem fazem o agente escolher uma arbitrariamente — vale podar.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-4 mt-1">
-            <div className="space-y-1.5">
-              <Label>Título</Label>
-              <Input
-                value={draftTitle}
-                onChange={(e) => setDraftTitle(e.target.value)}
-                placeholder="Ex: As oito lentes"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Conteúdo</Label>
-              <Textarea
-                value={draftContent}
-                onChange={(e) => setDraftContent(e.target.value)}
-                rows={18}
-                className="font-mono text-[12.5px] leading-relaxed"
-                placeholder="Markdown. É este texto que vai para o contexto do agente."
-              />
-              <p className="text-[11px] font-mono" style={{ color: "#3D5A78" }}>
-                {draftContent.length.toLocaleString("pt-BR")} caracteres ·{" "}
-                {estimateTokens(draftContent.length).toLocaleString("pt-BR")} tokens
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { setEditing(null); setCreating(false); }}
-              >
-                <X size={13} className="mr-1.5" /> Cancelar
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={!draftTitle.trim() || !draftContent.trim() || updateBlock.isPending || createBlock.isPending}
-              >
-                <Save size={13} className="mr-1.5" />
-                {editing ? "Salvar nova versão" : "Criar bloco"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── histórico ── */}
-      <Dialog open={!!historyFor} onOpenChange={(v) => !v && setHistoryFor(null)}>
-        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Histórico · {historyFor?.title}</DialogTitle>
-            <DialogDescription>
-              Versões anteriores, da mais recente para a mais antiga. Elas são o que permite
-              responder depois qual conhecimento o agente estava lendo.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 mt-1">
-            {versions.length === 0 ? (
+          <div className="space-y-2 mt-1">
+            {agentRules.length === 0 ? (
               <p className="text-sm py-4 text-center" style={{ color: "#3D5A78" }}>
-                Ainda sem versões anteriores.
+                Nenhuma regra ainda. Elas nascem das correções que você promover a permanentes.
               </p>
             ) : (
-              versions.map((v) => (
+              agentRules.map((r) => (
                 <div
-                  key={v.id}
-                  className="rounded-lg overflow-hidden"
-                  style={{ background: "rgba(11,135,195,0.04)", border: "1px solid rgba(11,135,195,0.12)" }}
+                  key={r.id}
+                  className="rounded-lg px-3.5 py-3"
+                  style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.2)" }}
                 >
-                  <div
-                    className="px-3 py-2 flex items-center justify-between gap-3"
-                    style={{ borderBottom: "1px solid rgba(11,135,195,0.1)" }}
-                  >
-                    <span className="text-[11px] font-mono" style={{ color: "#0CA8F5" }}>v{v.version}</span>
-                    <span className="text-[11px]" style={{ color: "#3D5A78" }}>
-                      {v.author?.full_name ?? "—"} · {formatDateTime(v.created_at)}
-                    </span>
-                  </div>
-                  <p
-                    className="px-3 py-2 text-[12px] leading-relaxed whitespace-pre-wrap font-mono"
-                    style={{
-                      color: "#7BA3C6",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 6,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {v.content}
+                  <p className="text-[13px] leading-relaxed" style={{ color: "#E2EBF8" }}>{r.content}</p>
+                  <p className="text-[11px] mt-1.5 font-mono" style={{ color: "#3D5A78" }}>
+                    {r.phase_code ? `fase ${r.phase_code} · ` : "todas as fases · "}
+                    {r.author?.full_name ?? "—"} · {formatDateTime(r.created_at)}
                   </p>
                 </div>
               ))
@@ -396,33 +388,6 @@ export default function ConhecimentoPage() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* ── remoção ── */}
-      <AlertDialog open={!!deleting} onOpenChange={(v) => !v && setDeleting(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remover bloco?</AlertDialogTitle>
-            <AlertDialogDescription>
-              <strong>{deleting?.title}</strong> sai do conhecimento dos agentes que leem esta
-              base. O histórico de versões vai junto.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={async () => {
-                if (deleting) {
-                  await deleteBlock.mutateAsync(deleting.id);
-                  setDeleting(null);
-                }
-              }}
-            >
-              Remover
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

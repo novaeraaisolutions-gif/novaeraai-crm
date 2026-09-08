@@ -708,6 +708,117 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["partner_payments"]["Insert"]>;
         Relationships: [];
       };
+      agents: {
+        Row: {
+          id: string;
+          org_id: string;
+          slug: string;
+          name: string;
+          tagline: string | null;
+          description: string | null;
+          never_does: string | null;
+          system_prompt: string;
+          model: string;
+          accent: string;
+          position: number;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agents"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["agents"]["Insert"]>;
+        Relationships: [];
+      };
+      agent_phases: {
+        Row: {
+          id: string;
+          agent_id: string;
+          code: string;
+          name: string;
+          description: string | null;
+          instruction: string;
+          effort: "low" | "medium" | "high" | "xhigh" | "max";
+          produces_artifact: string | null;
+          requires_artifacts: string[];
+          output_schema: Record<string, unknown> | null;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agent_phases"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["agent_phases"]["Insert"]>;
+        Relationships: [];
+      };
+      knowledge_bases: {
+        Row: {
+          id: string;
+          org_id: string;
+          slug: string;
+          name: string;
+          description: string | null;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["knowledge_bases"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["knowledge_bases"]["Insert"]>;
+        Relationships: [];
+      };
+      knowledge_blocks: {
+        Row: {
+          id: string;
+          kb_id: string;
+          title: string;
+          content: string;
+          position: number;
+          always_active: boolean;
+          tags: string[];
+          version: number;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["knowledge_blocks"]["Row"], "id" | "created_at" | "updated_at" | "version" | "tags" | "always_active" | "position">>
+          & { version?: number; tags?: string[]; always_active?: boolean; position?: number };
+        Update: Partial<Database["public"]["Tables"]["knowledge_blocks"]["Insert"]>;
+        Relationships: [];
+      };
+      knowledge_block_versions: {
+        Row: {
+          id: string;
+          block_id: string;
+          version: number;
+          title: string;
+          content: string;
+          author_id: string | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["knowledge_block_versions"]["Row"], "id" | "created_at">>;
+        Update: Partial<Database["public"]["Tables"]["knowledge_block_versions"]["Insert"]>;
+        Relationships: [];
+      };
+      agent_knowledge: {
+        Row: { agent_id: string; kb_id: string };
+        Insert: Database["public"]["Tables"]["agent_knowledge"]["Row"];
+        Update: Partial<Database["public"]["Tables"]["agent_knowledge"]["Row"]>;
+        Relationships: [];
+      };
+      agent_rules: {
+        Row: {
+          id: string;
+          agent_id: string;
+          phase_code: string | null;
+          content: string;
+          active: boolean;
+          author_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agent_rules"]["Row"], "id" | "created_at" | "updated_at">>;
+        Update: Partial<Database["public"]["Tables"]["agent_rules"]["Insert"]>;
+        Relationships: [];
+      };
       user_goals: {
         Row: {
           id: string;

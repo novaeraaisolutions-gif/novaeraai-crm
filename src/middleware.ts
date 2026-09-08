@@ -15,7 +15,7 @@ const ROLE_ALLOWED_PREFIXES: Record<string, string[]> = {
   developer: ["/projects", "/documents", "/tasks"],
   comercial: [
     "/leads", "/contacts", "/companies", "/proposals", "/catalog",
-    "/tasks", "/calendar", "/customer-success",
+    "/tasks", "/calendar", "/customer-success", "/agentes",
   ],
 };
 

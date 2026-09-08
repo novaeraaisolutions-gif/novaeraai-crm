@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Target, Building2, FileText, Package,
   Rocket, FolderOpen, CheckSquare, Calendar, Settings,
-  ChevronLeft, ChevronRight, LogOut, ShieldCheck, HeartHandshake,
+  ChevronLeft, ChevronRight, LogOut, ShieldCheck, HeartHandshake, Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useSidebarStore } from "@/store/sidebar-store";
@@ -29,6 +29,12 @@ const NAV_GROUPS = [
       { icon: Building2, label: "Empresas", href: "/companies" },
       { icon: FileText, label: "Propostas", href: "/proposals" },
       { icon: Package, label: "Catálogo", href: "/catalog" },
+    ],
+  },
+  {
+    label: "AGENTES",
+    items: [
+      { icon: Bot, label: "Agentes", href: "/agentes" },
     ],
   },
   {
@@ -75,7 +81,7 @@ const DEVELOPER_NAV_GROUPS = NAV_GROUPS
 // O papel "comercial" vê o bloco Comercial inteiro, a Gestão e o Customer
 // Success (esse limitado à carteira dele, filtrado na própria página).
 const COMERCIAL_NAV_GROUPS = NAV_GROUPS.filter((g) =>
-  ["COMERCIAL", "GESTÃO", "SUCESSO DO CLIENTE"].includes(g.label)
+  ["COMERCIAL", "AGENTES", "GESTÃO", "SUCESSO DO CLIENTE"].includes(g.label)
 );
 
 const NAV_GROUPS_BY_ROLE: Record<string, typeof NAV_GROUPS> = {

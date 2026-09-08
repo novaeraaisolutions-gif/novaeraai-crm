@@ -5,6 +5,7 @@ import {
   buildPhaseContext, checkGate, loadValidatedArtifacts,
 } from "@/lib/agents/context";
 import { validateArtifact, issuesToPrompt } from "@/lib/agents/validators";
+import { isDocumentKind, extractHtml } from "@/lib/agents/documents";
 
 // As fases são longas — a Fase B roda no effort máximo sobre uma
 // transcrição inteira. Streaming mantém a conexão viva e mostra o texto
@@ -111,11 +112,13 @@ export async function POST(req: Request) {
 
   // Os artefatos validados entram como primeira mensagem. É o handoff —
   // a Arquitetura recebe A1+A2 e nada mais da conversa do Diagnóstico.
+  // Vêm da corrente de operações, então atravessam a fronteira entre
+  // agentes; o histórico do agente anterior, não.
   if (artifacts.length > 0) {
     messages.push({
       role: "user",
       content: artifacts
-        .map((a) => `# ${a.kind} — validado\n\n${a.content_md}`)
+        .map((a) => `# ${a.kind} — validado\n\n${a.content_md ?? a.content_html ?? ""}`)
         .join("\n\n---\n\n"),
     });
     messages.push({
@@ -244,6 +247,12 @@ export async function POST(req: Request) {
             .limit(1)
             .maybeSingle();
 
+          // D1 e D2 saem em HTML porque vão para o cliente. O texto bruto
+          // é preservado junto: se a extração falhar, ainda há o que ler.
+          const html = isDocumentKind(ctx.phase.producesArtifact)
+            ? extractHtml(text)
+            : null;
+
           const { data: created } = await admin
             .from("agent_artifacts")
             .insert({
@@ -252,6 +261,7 @@ export async function POST(req: Request) {
               version: ((prev?.version as number | undefined) ?? 0) + 1,
               phase_code: phaseCode,
               content_md: text,
+              content_html: html,
               status: "rascunho",
               kb_versions: ctx.kbVersions,
               model: ctx.agent.model,

@@ -138,6 +138,41 @@ export async function buildPhaseContext(
 }
 
 /**
+ * A corrente de operações, da atual para trás.
+ *
+ * O Diagnóstico produz A2 numa operação; a Arquitetura consome A2 em
+ * outra. Sem a corrente, o gate olharia só para o próprio run e a
+ * Arquitetura nunca sairia do lugar — ela exige um artefato que, por
+ * desenho, nasce fora dela.
+ *
+ * O limite de profundidade não é defensivo contra a esteira, que tem três
+ * elos: é contra um ciclo criado por engano, que aqui viraria loop
+ * infinito no servidor.
+ */
+export async function resolveRunChain(
+  admin: AdminClient,
+  runId: string,
+  maxDepth = 6
+): Promise<string[]> {
+  const chain: string[] = [];
+  const seen = new Set<string>();
+  let current: string | null = runId;
+
+  while (current && chain.length < maxDepth && !seen.has(current)) {
+    seen.add(current);
+    chain.push(current);
+    const res: { data: { parent_run_id: string | null } | null } = await admin
+      .from("agent_runs")
+      .select("parent_run_id")
+      .eq("id", current)
+      .maybeSingle();
+    current = res.data?.parent_run_id ?? null;
+  }
+
+  return chain;
+}
+
+/**
  * O gate. A fase não roda enquanto o que ela exige não estiver validado.
  *
  * Isto é o que substitui "pare e aguarde validação" no prompt: a
@@ -150,10 +185,12 @@ export async function checkGate(
 ): Promise<{ ok: boolean; missing: string[] }> {
   if (requires.length === 0) return { ok: true, missing: [] };
 
+  const chain = await resolveRunChain(admin, runId);
+
   const { data } = await admin
     .from("agent_artifacts")
     .select("kind")
-    .eq("run_id", runId)
+    .in("run_id", chain)
     .eq("status", "validado");
 
   const validated = new Set(((data ?? []) as { kind: string }[]).map((a) => a.kind));
@@ -161,16 +198,47 @@ export async function checkGate(
   return { ok: missing.length === 0, missing };
 }
 
-/** Artefatos já validados, que são o que a fase seguinte recebe como entrada. */
-export async function loadValidatedArtifacts(admin: AdminClient, runId: string) {
+export interface ValidatedArtifact {
+  kind: string;
+  content_md: string | null;
+  content_html: string | null;
+  run_id: string;
+}
+
+/**
+ * Artefatos validados da corrente — o que a fase seguinte recebe como
+ * entrada, e a única coisa que atravessa a fronteira entre agentes.
+ *
+ * Quando o mesmo tipo aparece em mais de um elo, vence o mais próximo:
+ * se esta operação revalidou o A3, é o A3 dela que vale, não o herdado.
+ */
+export async function loadValidatedArtifacts(
+  admin: AdminClient,
+  runId: string
+): Promise<ValidatedArtifact[]> {
+  const chain = await resolveRunChain(admin, runId);
+
   const { data } = await admin
     .from("agent_artifacts")
-    .select("kind, content_md")
-    .eq("run_id", runId)
+    .select("kind, content_md, content_html, run_id")
+    .in("run_id", chain)
     .eq("status", "validado")
     .order("created_at", { ascending: true });
 
-  return ((data ?? []) as { kind: string; content_md: string | null }[]).filter(
-    (a) => !!a.content_md
-  );
+  const rows = (data ?? []) as ValidatedArtifact[];
+  const distance = new Map(chain.map((id, i) => [id, i]));
+
+  const nearest = new Map<string, ValidatedArtifact>();
+  for (const row of rows) {
+    const prev = nearest.get(row.kind);
+    const d = distance.get(row.run_id) ?? Number.MAX_SAFE_INTEGER;
+    const dPrev = prev ? distance.get(prev.run_id) ?? Number.MAX_SAFE_INTEGER : Infinity;
+    if (!prev || d < dPrev) nearest.set(row.kind, row);
+  }
+
+  // Ordem estável por tipo: A1, A2, A3... é a ordem em que foram
+  // produzidos, e é como o agente seguinte espera lê-los.
+  return Array.from(nearest.values())
+    .filter((a) => !!(a.content_md || a.content_html))
+    .sort((a, b) => a.kind.localeCompare(b.kind));
 }

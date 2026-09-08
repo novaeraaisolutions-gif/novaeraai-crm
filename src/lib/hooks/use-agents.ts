@@ -13,7 +13,10 @@ export type KnowledgeBlockVersion = Database["public"]["Tables"]["knowledge_bloc
 export type AgentRule = Database["public"]["Tables"]["agent_rules"]["Row"];
 
 export type AgentWithDetail = Agent & {
-  phases: Pick<AgentPhase, "id" | "code" | "name" | "effort" | "produces_artifact" | "position">[];
+  phases: Pick<
+    AgentPhase,
+    "id" | "code" | "name" | "effort" | "produces_artifact" | "requires_artifacts" | "position"
+  >[];
   knowledge: Pick<KnowledgeBase, "id" | "slug" | "name">[];
 };
 
@@ -29,7 +32,7 @@ export const useAgents = () => {
         .from("agents")
         .select(
           `*,
-           phases:agent_phases(id, code, name, effort, produces_artifact, position),
+           phases:agent_phases(id, code, name, effort, produces_artifact, requires_artifacts, position),
            links:agent_knowledge(kb:knowledge_bases(id, slug, name))`
         )
         .order("position", { ascending: true });

@@ -166,10 +166,175 @@ function validateD1(text: string): ValidationResult {
   return { ok: issues.length === 0, issues };
 }
 
+/**
+ * A3 — Três níveis de solução. "Sempre três. Não dois, não cinco."
+ * E o nível Enxuto que não resolve o Gargalo Âncora não é enxuto, é
+ * incompleto — a trava aqui é que os três existam e que os achados não
+ * resolvidos apareçam com o custo de deixá-los.
+ */
+function validateA3(text: string): ValidationResult {
+  const issues: ValidationIssue[] = [];
+
+  const niveis = ["enxuta", "ideal", "completa"].filter((n) =>
+    new RegExp(`\\b${n}\\b`, "i").test(text)
+  );
+  if (niveis.length < 3) {
+    const faltam = ["Enxuta", "Ideal", "Completa"].filter(
+      (n) => !niveis.includes(n.toLowerCase())
+    );
+    issues.push({
+      rule: "tres_niveis",
+      detail: `Faltam os níveis: ${faltam.join(", ")}. São sempre três — com um só a margem de acerto é baixa, com cinco os dois piores confundem quem apresenta.`,
+    });
+  }
+
+  // "Achados NÃO resolvidos neste nível: [IDs] — e o custo mensal de
+  // deixá-los." É o campo que impede vender a Enxuta como se fosse tudo.
+  if (!/n[ãa]o\s+resolvidos/i.test(text)) {
+    issues.push({
+      rule: "nao_resolvidos",
+      detail: 'Falta, por nível, a lista de "Achados NÃO resolvidos" com o custo mensal de deixá-los. Sem isso o nível enxuto parece completo.',
+    });
+  }
+
+  if (!/recomenda[çc][ãa]o/i.test(text)) {
+    issues.push({
+      rule: "recomendacao",
+      detail: "Falta a Recomendação explícita de qual nível levar, escrita para o sócio decidir.",
+    });
+  }
+
+  // O roadmap do nível recomendado, em três horizontes.
+  const horizontes = (text.match(/Horizonte\s*[123]/gi) ?? []).length;
+  if (horizontes < 3) {
+    issues.push({
+      rule: "roadmap",
+      detail: `Roadmap incompleto (${horizontes} de 3 horizontes). H1 prova valor no Âncora, H2 expande, H3 é o que só se torna possível depois que o dado existe.`,
+    });
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+/**
+ * A4 — Modelo de custo. "Todo número tem fonte declarada." Esta é a
+ * trava que impede a estimativa disfarçada de dado, que é o erro que
+ * envenena a proposta inteira sem aparecer.
+ */
+function validateA4(text: string): ValidationResult {
+  const issues: ValidationIssue[] = [];
+
+  const fontes = (text.match(/Fonte:/gi) ?? []).length;
+  if (fontes === 0) {
+    issues.push({
+      rule: "fonte",
+      detail: 'Nenhum campo "Fonte:" declarado. Todo custo unitário precisa dizer se veio do NE-CUSTOS, do sócio, ou se não está disponível.',
+    });
+  }
+
+  // "Apresente três cenários — volume baixo, esperado e alto — porque a
+  // mensalidade precisa sobreviver ao cenário alto."
+  const cenarios = ["baixo", "esperado", "alto"].filter((c) =>
+    new RegExp(`\\b${c}\\b`, "i").test(text)
+  );
+  if (cenarios.length < 3) {
+    issues.push({
+      rule: "cenarios",
+      detail: "Faltam os três cenários de volume (baixo, esperado, alto). A mensalidade precisa sobreviver ao cenário alto.",
+    });
+  }
+
+  if (!/piso\s+(de\s+)?mensalidade/i.test(text)) {
+    issues.push({
+      rule: "piso",
+      detail: "Falta o piso de mensalidade (custo no cenário esperado + margem alvo). Nenhum plano é recomendado abaixo dele.",
+    });
+  }
+
+  if (!/margem/i.test(text)) {
+    issues.push({
+      rule: "margem",
+      detail: "A margem usada no piso não foi declarada. Piso sem margem explícita não é piso.",
+    });
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+/**
+ * A5 — Custo de inércia. A trava é a separação entre defensável e
+ * estimado: "é melhor ancorar em R$ 18 mil defensáveis do que em R$ 40
+ * mil discutíveis", porque um número que o cliente derruba com uma
+ * pergunta destrói a proposta inteira.
+ */
+function validateA5(text: string): ValidationResult {
+  const issues: ValidationIssue[] = [];
+
+  if (!/defens[áa]vel|defens[áa]veis/i.test(text)) {
+    issues.push({
+      rule: "defensavel",
+      detail: "Falta separar o custo defensável (premissa que o cliente confirmaria) do custo estimado (premissa nossa).",
+    });
+  }
+
+  if (!/conservador/i.test(text)) {
+    issues.push({
+      rule: "conservador",
+      detail: "Falta o número conservador, calculado só com o defensável. É ele que vai para a proposta; o completo fica como reserva de argumento.",
+    });
+  }
+
+  if (!/premissa/i.test(text)) {
+    issues.push({
+      rule: "premissas",
+      detail: "Cada parcela do custo precisa vir com sua premissa e nível de confiança.",
+    });
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+/**
+ * D2 — Proposta. As seções que protegem a entrega são as que somem
+ * primeiro quando o documento sai apressado: o que NÃO entra, as
+ * dependências do cliente e os riscos.
+ */
+function validateD2(text: string): ValidationResult {
+  const issues: ValidationIssue[] = [];
+
+  const obrigatorias: [RegExp, string][] = [
+    [/investimento/i, "Investimento — implementação e mensalidade, ancorados no custo de inércia."],
+    [/parcelamento|parcela/i, "Parcelamento por marco."],
+    [/cronograma/i, "Cronograma."],
+    [/garantia/i, "Garantia."],
+    [/depend[êe]ncias?\s+do\s+cliente|depend[êe]ncias/i, "Dependências do cliente, com prazo — é a seção que protege a entrega."],
+    [/riscos?/i, "Riscos declarados."],
+  ];
+
+  for (const [re, nome] of obrigatorias) {
+    if (!re.test(text)) issues.push({ rule: "secao", detail: `Falta a seção: ${nome}` });
+  }
+
+  // "Escopo fechado do nível recomendado, com o que entra e,
+  // explicitamente, o que não entra."
+  if (!/n[ãa]o\s+(entra|inclui|est[áa]\s+inclu)/i.test(text)) {
+    issues.push({
+      rule: "escopo_fechado",
+      detail: 'Falta declarar explicitamente o que NÃO entra no escopo. Escopo sem exclusão declarada vira discussão na entrega.',
+    });
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
 const VALIDATORS: Record<string, (text: string) => ValidationResult> = {
   A1: validateA1,
   A2: validateA2,
+  A3: validateA3,
+  A4: validateA4,
+  A5: validateA5,
   D1: validateD1,
+  D2: validateD2,
 };
 
 export function validateArtifact(kind: string | null, text: string): ValidationResult {

@@ -174,7 +174,9 @@ export interface Database {
           lead_id: string | null;
           company_id: string | null;
           contact_id: string | null;
-          business_unit: "labs" | "advisory" | "enterprise";
+          // "intelligence" existe no banco desde a criação da unidade — o
+          // tipo é que estava atrasado. A proposta PROP-2026-1817 usa.
+          business_unit: "labs" | "advisory" | "enterprise" | "intelligence";
           discount: number | null;
           total: number;
           valid_until: string | null;
@@ -295,7 +297,9 @@ export interface Database {
           updated_at: string;
           created_by: string | null;
         };
-        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["projects"]["Row"], "id" | "created_at" | "updated_at" | "auto_created_from_lead" | "lead_win_notice_dismissed">> & { auto_created_from_lead?: boolean; lead_win_notice_dismissed?: boolean };
+        // progress e tags têm DEFAULT no banco (0 e '{}'), então são
+        // opcionais na inserção — o tipo é que os exigia.
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["projects"]["Row"], "id" | "created_at" | "updated_at" | "auto_created_from_lead" | "lead_win_notice_dismissed" | "progress" | "tags">> & { auto_created_from_lead?: boolean; lead_win_notice_dismissed?: boolean; progress?: number; tags?: string[] };
         Update: Partial<Database["public"]["Tables"]["projects"]["Insert"]>;
         Relationships: [];
       };
@@ -740,6 +744,11 @@ export interface Database {
           title: string;
           status: "em_andamento" | "concluida" | "arquivada";
           current_phase: string | null;
+          parent_run_id: string | null;
+          closed_project_id: string | null;
+          closed_proposal_id: string | null;
+          closed_at: string | null;
+          closed_by: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -774,6 +783,7 @@ export interface Database {
           version: number;
           phase_code: string | null;
           content_md: string | null;
+          content_html: string | null;
           content_json: Json | null;
           status: "rascunho" | "validado" | "substituido";
           validated_by: string | null;
@@ -824,6 +834,7 @@ export interface Database {
           accent: string;
           position: number;
           active: boolean;
+          next_agent_slug: string | null;
           created_at: string;
           updated_at: string;
         };

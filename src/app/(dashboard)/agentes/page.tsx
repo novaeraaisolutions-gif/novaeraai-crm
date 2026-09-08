@@ -1,9 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Bot, BookOpen, Ban, ArrowRight, Layers, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BookOpen, Ban, ArrowRight, Layers, Lock, Plus, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { useAgents, useKnowledgeBases, estimateTokens } from "@/lib/hooks/use-agents";
+import { useAgentRuns, useCreateRun } from "@/lib/hooks/use-agent-runs";
+import { useCompanies } from "@/lib/hooks/use-companies";
 import { useUser } from "@/lib/hooks/use-user";
+import { formatDateTime } from "@/lib/utils/format";
 
 const EFFORT_LABEL: Record<string, string> = {
   low: "baixo", medium: "médio", high: "alto", xhigh: "muito alto", max: "máximo",
@@ -12,8 +26,34 @@ const EFFORT_LABEL: Record<string, string> = {
 export default function AgentesPage() {
   const { data: agents = [], isLoading } = useAgents();
   const { data: bases = [] } = useKnowledgeBases();
+  const { data: runs = [] } = useAgentRuns();
+  const { data: companies = [] } = useCompanies();
   const { user } = useUser();
+  const router = useRouter();
+  const createRun = useCreateRun();
   const isAdmin = user?.role === "admin";
+
+  const [openFor, setOpenFor] = useState<{ id: string; name: string } | null>(null);
+  const [title, setTitle] = useState("");
+  const [companyId, setCompanyId] = useState("__none__");
+
+  const startRun = async () => {
+    if (!user || !openFor || !title.trim()) return;
+    const created = await createRun.mutateAsync({
+      orgId: user.org_id,
+      agentId: openFor.id,
+      title: title.trim(),
+      companyId: companyId !== "__none__" ? companyId : null,
+      userId: user.id,
+    });
+    setOpenFor(null);
+    setTitle("");
+    setCompanyId("__none__");
+    router.push(`/agentes/${created.id}`);
+  };
+
+  const runsByAgent = (agentId: string) =>
+    runs.filter((r) => r.agent_id === agentId && r.status === "em_andamento");
 
   // Contexto fixo de cada agente: o prompt mais tudo que ele lê. É o
   // número que decide se um dia vale ligar seleção por trecho.
@@ -79,7 +119,11 @@ export default function AgentesPage() {
                           : { background: "rgba(11,135,195,0.12)", color: "#0CA8F5" }
                       }
                     >
-                      {disabled ? "aguardando material" : `${agent.phases.length} fases`}
+                      {disabled
+                        ? "aguardando material"
+                        : runsByAgent(agent.id).length > 0
+                        ? `${runsByAgent(agent.id).length} em andamento`
+                        : `${agent.phases.length} fases`}
                     </span>
                   </div>
                   {agent.tagline && (
@@ -169,12 +213,16 @@ export default function AgentesPage() {
                     {disabled ? "—" : `${contextTokens.toLocaleString("pt-BR")} tokens de contexto fixo`}
                   </span>
                   <button
-                    disabled
-                    title="Disponível na próxima etapa da construção"
-                    className="text-[12px] font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-not-allowed"
-                    style={{ border: "1px solid rgba(11,135,195,0.15)", color: "#3D5A78" }}
+                    onClick={() => !disabled && setOpenFor({ id: agent.id, name: agent.name })}
+                    disabled={disabled}
+                    className="text-[12px] font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 disabled:cursor-not-allowed"
+                    style={
+                      disabled
+                        ? { border: "1px solid rgba(11,135,195,0.15)", color: "#3D5A78" }
+                        : { background: "linear-gradient(135deg,#0B87C3,#0CA8F5)", color: "#fff" }
+                    }
                   >
-                    Abrir chat <ArrowRight size={12} />
+                    <Plus size={12} /> Nova operação
                   </button>
                 </div>
               </div>
@@ -183,34 +231,90 @@ export default function AgentesPage() {
         </div>
       )}
 
-      {/* estado da construção — honesto sobre o que ainda não roda */}
-      <div
-        className="rounded-xl p-5 flex gap-3.5"
-        style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(245,158,11,0.22)" }}
-      >
-        <Bot size={16} className="flex-shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
-        <div className="flex flex-col gap-1.5">
-          <p className="text-sm font-medium" style={{ color: "#E2EBF8" }}>
-            Fundação instalada — o chat entra na próxima etapa
-          </p>
-          <p className="text-[13px] leading-relaxed" style={{ color: "#7BA3C6" }}>
-            Os agentes, as fases e o conhecimento já vivem no banco, com o isolamento
-            valendo por vínculo. Falta o motor de execução e a chave da API Anthropic.
-            {isAdmin && (
-              <>
-                {" "}Enquanto isso, a diretoria já pode curar o conhecimento em{" "}
-                <Link href="/agentes/conhecimento" style={{ color: "#0CA8F5" }}>Conhecimento</Link>.
-              </>
-            )}
-          </p>
+      {/* operações */}
+      {runs.length > 0 && (
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{ background: "rgba(12,21,38,0.8)", border: "1px solid rgba(11,135,195,0.15)" }}
+        >
+          <div
+            className="px-5 py-3 text-[10px] font-mono uppercase tracking-wider flex items-center gap-2"
+            style={{ borderBottom: "1px solid rgba(11,135,195,0.1)", color: "#3D5A78" }}
+          >
+            <Clock size={11} /> Operações
+          </div>
+          {runs.slice(0, 12).map((r) => (
+            <Link
+              key={r.id}
+              href={`/agentes/${r.id}`}
+              className="px-5 py-3 flex items-center gap-3"
+              style={{ borderBottom: "1px solid rgba(11,135,195,0.08)" }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ background: r.agent?.accent ?? "#3D5A78" }}
+              />
+              <span className="text-sm flex-1 truncate" style={{ color: "#E2EBF8" }}>{r.title}</span>
+              <span className="text-[11px] hidden sm:inline" style={{ color: "#7BA3C6" }}>{r.agent?.name}</span>
+              {r.current_phase && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded" style={{ background: "rgba(11,135,195,0.1)", color: "#0CA8F5" }}>
+                  Fase {r.current_phase}
+                </span>
+              )}
+              <span className="text-[11px] hidden md:inline" style={{ color: "#3D5A78" }}>
+                {formatDateTime(r.created_at)}
+              </span>
+              <ArrowRight size={12} style={{ color: "#3D5A78" }} />
+            </Link>
+          ))}
         </div>
-      </div>
+      )}
 
       {!isAdmin && (
         <p className="text-[12px] flex items-center gap-1.5" style={{ color: "#3D5A78" }}>
           <Lock size={11} /> A edição do conhecimento é restrita à diretoria.
         </p>
       )}
+
+      <Dialog open={!!openFor} onOpenChange={(v) => !v && setOpenFor(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova operação · {openFor?.name}</DialogTitle>
+            <DialogDescription>
+              Cada cliente é uma operação nova, começando do zero. Nada da conversa de um
+              cliente atravessa para a de outro.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-1">
+            <div className="space-y-1.5">
+              <Label>Identificação *</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Trietel · Diagnóstico"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cliente</Label>
+              <Select value={companyId} onValueChange={setCompanyId}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sem cliente vinculado</SelectItem>
+                  {companies.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="outline" size="sm" onClick={() => setOpenFor(null)}>Cancelar</Button>
+              <Button size="sm" onClick={startRun} disabled={!title.trim() || createRun.isPending}>
+                Abrir operação
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

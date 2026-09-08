@@ -708,6 +708,86 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["partner_payments"]["Insert"]>;
         Relationships: [];
       };
+      agent_runs: {
+        Row: {
+          id: string;
+          org_id: string;
+          agent_id: string;
+          lead_id: string | null;
+          company_id: string | null;
+          title: string;
+          status: "em_andamento" | "concluida" | "arquivada";
+          current_phase: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agent_runs"]["Row"], "id" | "created_at" | "updated_at" | "status">> & { status?: "em_andamento" | "concluida" | "arquivada" };
+        Update: Partial<Database["public"]["Tables"]["agent_runs"]["Insert"]>;
+        Relationships: [];
+      };
+      agent_messages: {
+        Row: {
+          id: string;
+          run_id: string;
+          role: "user" | "assistant" | "system";
+          content: string;
+          phase_code: string | null;
+          is_phase_run: boolean;
+          input_tokens: number | null;
+          output_tokens: number | null;
+          cache_read_tokens: number | null;
+          author_id: string | null;
+          created_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agent_messages"]["Row"], "id" | "created_at" | "is_phase_run">> & { is_phase_run?: boolean };
+        Update: Partial<Database["public"]["Tables"]["agent_messages"]["Insert"]>;
+        Relationships: [];
+      };
+      agent_artifacts: {
+        Row: {
+          id: string;
+          run_id: string;
+          kind: string;
+          version: number;
+          phase_code: string | null;
+          content_md: string | null;
+          content_json: Json | null;
+          status: "rascunho" | "validado" | "substituido";
+          validated_by: string | null;
+          validated_at: string | null;
+          kb_versions: Json;
+          model: string | null;
+          effort: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agent_artifacts"]["Row"], "id" | "created_at" | "updated_at" | "version" | "status" | "kb_versions">> & { version?: number; status?: "rascunho" | "validado" | "substituido"; kb_versions?: Json };
+        Update: Partial<Database["public"]["Tables"]["agent_artifacts"]["Insert"]>;
+        Relationships: [];
+      };
+      agent_corrections: {
+        Row: {
+          id: string;
+          org_id: string;
+          run_id: string | null;
+          artifact_id: string | null;
+          agent_id: string;
+          phase_code: string | null;
+          content: string;
+          classification: "fato_errado" | "achado_fraco" | "arquitetura_inadequada" | "custo" | "preco" | "tom" | "clareza" | null;
+          resolution: "pontual" | "regra" | "conhecimento" | null;
+          resolved_rule_id: string | null;
+          resolved_block_id: string | null;
+          author_id: string | null;
+          confirmed_by: string | null;
+          confirmed_at: string | null;
+          created_at: string;
+        };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["agent_corrections"]["Row"], "id" | "created_at">>;
+        Update: Partial<Database["public"]["Tables"]["agent_corrections"]["Insert"]>;
+        Relationships: [];
+      };
       agents: {
         Row: {
           id: string;

@@ -48,3 +48,9 @@ ALTER TABLE agent_runs
   ADD COLUMN IF NOT EXISTS closed_proposal_id UUID REFERENCES proposals ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS closed_at          TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS closed_by          UUID REFERENCES users;
+
+-- Registra no histórico de migrations. Sem isto, um `db push` futuro
+-- tentaria rodar esta migration de novo.
+INSERT INTO supabase_migrations.schema_migrations (version, name)
+VALUES ('054', 'agent_handoff')
+ON CONFLICT (version) DO NOTHING;

@@ -39,6 +39,18 @@ function isPublicRoute(pathname: string) {
 function isAllowedForRole(role: string, pathname: string) {
   const prefixes = ROLE_ALLOWED_PREFIXES[role];
   if (!prefixes) return true; // papel sem restrição (admin, member)
+
+  // As rotas de API não passam por este filtro. Toda uma delas já
+  // autentica e escopa pelo próprio usuário — e o filtro aqui, pensado
+  // para navegação, respondia a uma chamada de API com um redirect para
+  // a home do papel. Do lado do cliente isso chega como HTML no lugar do
+  // JSON: o botão não faz nada e não há erro nenhum para ver.
+  //
+  // Era o que quebrava "Conectar" no Google Calendar para comercial e
+  // developer, e junto com ele a sincronização da agenda e a aba de
+  // Agentes para o comercial.
+  if (pathname.startsWith("/api/")) return true;
+
   return [...prefixes, ...SELF_SERVICE_PREFIXES].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );

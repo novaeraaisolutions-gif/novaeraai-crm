@@ -11,6 +11,11 @@ const PUBLIC_ROUTES = ["/login"];
 //   as tarefas atribuídas a ele (filtro na página).
 // comercial: bloco Comercial inteiro + Gestão (Tarefas e Agenda) +
 //   Customer Success, esse último limitado à carteira dele.
+// Rotas da própria conta, liberadas a qualquer papel: conectar o próprio
+// Google Calendar não é administrar a organização, e tratar as duas
+// coisas como a mesma deixava metade do time sem conseguir sincronizar.
+const SELF_SERVICE_PREFIXES = ["/integracoes"];
+
 const ROLE_ALLOWED_PREFIXES: Record<string, string[]> = {
   developer: ["/projects", "/documents", "/tasks"],
   comercial: [
@@ -34,7 +39,7 @@ function isPublicRoute(pathname: string) {
 function isAllowedForRole(role: string, pathname: string) {
   const prefixes = ROLE_ALLOWED_PREFIXES[role];
   if (!prefixes) return true; // papel sem restrição (admin, member)
-  return prefixes.some(
+  return [...prefixes, ...SELF_SERVICE_PREFIXES].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 }

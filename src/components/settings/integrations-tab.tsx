@@ -40,7 +40,7 @@ export function IntegrationsTab() {
       const message = searchParams.get("message") ?? "";
       toast.error(ERROR_MESSAGES[message] ?? "Erro ao conectar com o Google Calendar.");
     }
-    router.replace("/settings");
+    router.replace("/integracoes");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const errorParam = searchParams.get("error");
 
   const redirectTo = (status: "success" | "error", message?: string) => {
-    const url = new URL("/settings", APP_URL);
+    const url = new URL("/integracoes", APP_URL);
     url.searchParams.set("google_calendar", status);
     if (message) url.searchParams.set("message", message);
     return NextResponse.redirect(url);

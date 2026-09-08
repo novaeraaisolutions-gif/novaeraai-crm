@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Target, Building2, FileText, Package,
   Rocket, FolderOpen, CheckSquare, Calendar, Settings,
-  ChevronLeft, ChevronRight, LogOut, ShieldCheck, HeartHandshake, Bot,
+  ChevronLeft, ChevronRight, LogOut, ShieldCheck, HeartHandshake, Bot, Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useSidebarStore } from "@/store/sidebar-store";
@@ -66,6 +66,14 @@ const NAV_GROUPS = [
   },
 ];
 
+// A conta de cada um, e só dela. Vai para todos os papéis: conectar o
+// próprio Google Calendar não depende de administrar a organização, e
+// juntar as duas coisas em Configurações deixava o time sem a tela.
+const MINHA_CONTA_GROUP = {
+  label: "MINHA CONTA",
+  items: [{ icon: Plug, label: "Integrações", href: "/integracoes" }],
+};
+
 // O que o papel "developer" vê: só a Entrega, mais Tarefas — é pra lá que
 // o email de nova tarefa leva, então precisa existir no menu também.
 const DEVELOPER_NAV_GROUPS = NAV_GROUPS
@@ -85,8 +93,8 @@ const COMERCIAL_NAV_GROUPS = NAV_GROUPS.filter((g) =>
 );
 
 const NAV_GROUPS_BY_ROLE: Record<string, typeof NAV_GROUPS> = {
-  developer: DEVELOPER_NAV_GROUPS,
-  comercial: COMERCIAL_NAV_GROUPS,
+  developer: [...DEVELOPER_NAV_GROUPS, MINHA_CONTA_GROUP],
+  comercial: [...COMERCIAL_NAV_GROUPS, MINHA_CONTA_GROUP],
 };
 
 const HOME_BY_ROLE: Record<string, string> = {
@@ -141,7 +149,7 @@ export const Sidebar = () => {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 space-y-6">
-          {(NAV_GROUPS_BY_ROLE[user?.role ?? ""] ?? NAV_GROUPS).map((group) => (
+          {(NAV_GROUPS_BY_ROLE[user?.role ?? ""] ?? [...NAV_GROUPS, MINHA_CONTA_GROUP]).map((group) => (
             <div key={group.label}>
               {!collapsed && (
                 <p className="px-4 mb-2 text-[11px] font-semibold tracking-[0.1em] text-sidebar-text/40 uppercase">

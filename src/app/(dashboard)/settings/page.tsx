@@ -15,9 +15,7 @@ import {
   Check,
   X,
   Mail,
-  CalendarClock,
 } from "lucide-react";
-import { IntegrationsTab } from "@/components/settings/integrations-tab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -618,10 +616,6 @@ export default function SettingsPage() {
             <BookTemplate size={14} className="mr-1.5" />
             Templates de Projeto
           </TabsTrigger>
-          <TabsTrigger value="integrations">
-            <CalendarClock size={14} className="mr-1.5" />
-            Integrações
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="org">
@@ -640,9 +634,6 @@ export default function SettingsPage() {
           <TemplatesTab />
         </TabsContent>
 
-        <TabsContent value="integrations">
-          <IntegrationsTab />
-        </TabsContent>
       </Tabs>
     </div>
   );

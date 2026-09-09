@@ -60,6 +60,11 @@ export async function GET(request: NextRequest) {
         calendar_id: "primary",
         sync_enabled: true,
         sync_token: null,
+        // Reconectar limpa o erro na hora. Sem isto o aviso vermelho
+        // continua na tela até a primeira sincronização passar, e quem
+        // acabou de reconectar acha que não funcionou.
+        sync_error: null,
+        sync_error_at: null,
       },
       { onConflict: "user_id" }
     );

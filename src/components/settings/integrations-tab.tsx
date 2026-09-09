@@ -89,10 +89,19 @@ export function IntegrationsTab() {
                   {connection.sync_error}
                 </p>
                 <p className="text-xs mt-1.5" style={{ color: "#7BA3C6" }}>
-                  Clique em <b>Desconectar</b> e conecte de novo. Se voltar a acontecer em poucos dias,
-                  o app OAuth no Google Cloud provavelmente está em modo &quot;Testing&quot;, que invalida o
-                  acesso a cada 7 dias — publicar o app resolve de vez.
+                  Reconectar resolve na hora. Se voltar a acontecer a cada 7 dias, é o app OAuth
+                  no Google Cloud em modo &quot;Testing&quot;, que expira o acesso nesse intervalo —
+                  publicar o app resolve de vez.
                 </p>
+                <Button
+                  size="sm"
+                  className="mt-3"
+                  style={{ background: "var(--primary)" }}
+                  onClick={() => (window.location.href = "/api/auth/google/connect")}
+                >
+                  <Link2 size={13} className="mr-1.5" />
+                  Reconectar
+                </Button>
               </div>
             )}
 

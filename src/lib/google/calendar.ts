@@ -25,9 +25,24 @@ export function getGoogleAuthUrl(state: string) {
     response_type: "code",
     scope: SCOPES,
     access_type: "offline",
-    prompt: "consent", // garante que sempre retorna refresh_token
+    // consent garante que sempre volta um refresh_token.
+    // select_account força o seletor de contas: o app é interno, então
+    // autorizar com a conta pessoal devolve 403 org_internal — e o Google
+    // usa a conta padrão do navegador sem perguntar, que para quem tem
+    // Gmail pessoal como padrão é sempre a errada.
+    prompt: "consent select_account",
     state,
   });
+
+  // Dica de domínio: faz o seletor abrir já na conta da organização.
+  // É sugestão, não trava — quem tiver motivo para usar outra ainda pode.
+  //
+  // O padrão fica no código, e não só em variável de ambiente, porque o
+  // domínio da organização não é segredo e o app é interno a ela. Assim
+  // não depende de uma configuração que não dá para conferir de fora:
+  // variável marcada como sensível na Vercel não volta no `env pull`.
+  params.set("hd", process.env.GOOGLE_HOSTED_DOMAIN || "novaeraai.com.br");
+
   return `${GOOGLE_OAUTH_URL}?${params.toString()}`;
 }
 

@@ -1,7 +1,21 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/login"];
+// Rotas de autenticação: abertas a quem não entrou, e que redirecionam
+// para casa quem já entrou.
+const AUTH_ROUTES = ["/login"];
+
+// Rotas abertas de verdade: acessíveis com ou sem sessão, e que NÃO
+// redirecionam ninguém. O Google busca a política de privacidade e os
+// termos de fora, sem sessão nenhuma, para publicar o app OAuth — e um
+// redirect para /login no lugar do documento reprova a publicação.
+const OPEN_ROUTES = ["/privacidade", "/termos"];
+
+// Rotas da própria conta, liberadas a qualquer papel: conectar o próprio
+// Google Calendar não é administrar a organização, e tratar as duas
+// coisas como a mesma deixava metade do time sem conseguir sincronizar.
+// Os documentos abertos entram junto — ninguém deve ser barrado deles.
+const SELF_SERVICE_PREFIXES = ["/integracoes", ...OPEN_ROUTES];
 
 // Papéis com acesso restrito a um recorte do sistema. Admin e member
 // continuam vendo tudo (não aparecem aqui).
@@ -11,11 +25,6 @@ const PUBLIC_ROUTES = ["/login"];
 //   as tarefas atribuídas a ele (filtro na página).
 // comercial: bloco Comercial inteiro + Gestão (Tarefas e Agenda) +
 //   Customer Success, esse último limitado à carteira dele.
-// Rotas da própria conta, liberadas a qualquer papel: conectar o próprio
-// Google Calendar não é administrar a organização, e tratar as duas
-// coisas como a mesma deixava metade do time sem conseguir sincronizar.
-const SELF_SERVICE_PREFIXES = ["/integracoes"];
-
 const ROLE_ALLOWED_PREFIXES: Record<string, string[]> = {
   developer: ["/projects", "/documents", "/tasks"],
   comercial: [
@@ -30,7 +39,8 @@ const ROLE_HOME: Record<string, string> = {
 };
 
 function isPublicRoute(pathname: string) {
-  if (PUBLIC_ROUTES.includes(pathname)) return true;
+  if (AUTH_ROUTES.includes(pathname)) return true;
+  if (OPEN_ROUTES.includes(pathname)) return true;
   // Proposal public page
   if (pathname.match(/^\/proposals\/[^/]+\/public$/)) return true;
   return false;
@@ -97,7 +107,7 @@ export async function middleware(request: NextRequest) {
     const role = profile?.role ?? "member";
     const home = ROLE_HOME[role] ?? "/dashboard";
 
-    if (PUBLIC_ROUTES.includes(pathname)) {
+    if (AUTH_ROUTES.includes(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = home;
       return NextResponse.redirect(url);

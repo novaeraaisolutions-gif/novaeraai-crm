@@ -35,6 +35,10 @@ const BASES = [
     description: "Formato de cada artefato interno e de cada documento de cliente." },
   { slug: "NE-COMERCIAL", name: "Comercial", file: "NE-COMERCIAL.md",
     description: "Filosofia de preço, faixas praticadas, planos e garantia." },
+  { slug: "NE-CONTRATOS-PADRAO", name: "Contratos — padrão e boilerplate", file: "NE-CONTRATOS-PADRAO.md",
+    description: "Estrutura de cláusulas dos dois tipos de contrato e os textos-base fixos. O 'o quê' do contrato." },
+  { slug: "NE-CONTRATOS-MODELO", name: "Contratos assinados", file: "NE-CONTRATOS-MODELO.md",
+    description: "Trietel, Áurea e Auto Marcas, como foram assinados. Referência de redação e de detalhe — nunca molde de escopo ou valor." },
   { slug: "NE-CUSTOS", name: "Custos", file: null,
     description: "Custo unitário de infraestrutura, API e mensageria por volume. Ainda não escrito — sem ele o agente monta a estrutura de cálculo e pergunta os números." },
 ];
@@ -108,14 +112,18 @@ const AGENTS = [
     name: "Contrato",
     accent: "#5B7994",
     position: 4,
-    file: null,
-    active: false,
-    tagline: "Preenche o contrato a partir do template e do escopo fechado",
+    file: "04-PROJETO-Contrato-INSTRUCOES.md",
+    active: true,
+    tagline: "Redige o contrato a partir do escopo fechado, no padrão da casa",
     description:
-      "Aguardando o material. Preenche o template com os dados do cliente e o escopo fechado na proposta aceita.",
-    never_does: "Não redige cláusula nova. Cláusula nova entra no template, por decisão da diretoria.",
-    knowledge: [],
-    phases: {},
+      "Identifica o tipo (implementação ou mensalidade), monta a ficha de dados para conferência e redige o contrato inteiro reaproveitando o boilerplate — propriedade intelectual, dados, confidencialidade, SLA e foro.",
+    never_does:
+      "Não inventa CNPJ, CPF, valor, prazo ou data — marca [A DEFINIR]. Não enfraquece as cláusulas de propriedade intelectual, dados, confidencialidade ou foro. Não acrescenta ao escopo o que não foi dito.",
+    knowledge: ["NE-CONTRATOS-PADRAO", "NE-CONTRATOS-MODELO", "NE-IDENTIDADE"],
+    phases: {
+      L: { name: "Levantamento", effort: "medium", produces: "A6", requires: [] },
+      M: { name: "Minuta",       effort: "high",   produces: "D3", requires: ["A6"] },
+    },
   },
 ];
 

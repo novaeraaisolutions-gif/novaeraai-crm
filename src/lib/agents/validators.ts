@@ -327,14 +327,168 @@ function validateD2(text: string): ValidationResult {
   return { ok: issues.length === 0, issues };
 }
 
+/**
+ * Converte "R$ 4.250,00" no número 4250. Contrato brasileiro usa ponto de
+ * milhar e vírgula decimal — ler com parseFloat direto daria 4.25.
+ */
+function parseBRL(texto: string): number | null {
+  const m = texto.match(/R\$\s*([\d.]+(?:,\d{2})?)/);
+  if (!m) return null;
+  const n = Number(m[1].replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * A6 — Ficha de Dados. A trava é a completude declarada: campo obrigatório
+ * ausente tem que aparecer como ausente, nunca sumir.
+ */
+function validateA6(text: string): ValidationResult {
+  const issues: ValidationIssue[] = [];
+
+  const obrigatorios: [RegExp, string][] = [
+    [/tipo\s+de\s+contrato/i, "Tipo de contrato (A ou B), com a justificativa"],
+    [/raz[ãa]o\s+social/i, "Razão social do cliente"],
+    [/CNPJ/i, "CNPJ do cliente"],
+    [/representante/i, "Representante legal"],
+    [/CPF/i, "CPF do representante"],
+    [/cidade|munic[íi]pio|\/\s*[A-Z]{2}\b/i, "Cidade/UF"],
+    [/valor\s+total/i, "Valor total"],
+    [/forma\s+de\s+pagamento|pagamento/i, "Forma de pagamento"],
+    [/m[óo]dulo|escopo/i, "Escopo, módulo a módulo"],
+  ];
+  for (const [re, nome] of obrigatorios) {
+    if (!re.test(text)) issues.push({ rule: "campo", detail: `Falta na ficha: ${nome}.` });
+  }
+
+  // "Preenchido com o padrão da casa" é o que o sócio confirma. Sem a
+  // lista, um padrão adotado em silêncio vira cláusula que ninguém
+  // decidiu.
+  if (!/padr[ãa]o\s+da\s+casa/i.test(text)) {
+    issues.push({
+      rule: "padroes_usados",
+      detail: 'Falta a lista "Preenchido com o padrão da casa". Opcional completado em silêncio vira cláusula que ninguém decidiu.',
+    });
+  }
+
+  if (!/faltando|em\s+aberto|n[ãa]o\s+informad/i.test(text)) {
+    issues.push({
+      rule: "faltando",
+      detail: 'Falta a lista "Faltando". Mesmo vazia ela precisa ser declarada — ausência silenciosa é o que vira [A DEFINIR] esquecido no contrato.',
+    });
+  }
+
+  // Tipo B sem o contrato anterior é um contrato solto.
+  if (/tipo\s+de\s+contrato:?\s*\**\s*B\b/i.test(text) &&
+      !/implementa[çc][ãa]o\s+anterior|contrato\s+anterior|NEA-/i.test(text)) {
+    issues.push({
+      rule: "tipo_b_ancora",
+      detail: "Tipo B sem referência ao contrato de implementação anterior. Nunca gere um Tipo B solto.",
+    });
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+/**
+ * D3 — Contrato. As travas aqui são as que o próprio processo manda
+ * conferir, e a aritmética é a mais importante: um modelo revisando a
+ * própria soma em prosa erra sem avisar, e o resultado é um documento
+ * assinável com o número errado.
+ */
+function validateD3(text: string): ValidationResult {
+  const issues: ValidationIssue[] = [];
+
+  // As cláusulas que não podem ser enfraquecidas. O conjunto muda por
+  // tipo: no Tipo B a propriedade intelectual vive no contrato de
+  // implementação que ele referencia, e exigi-la aqui reprovaria o
+  // contrato da Auto Marcas, que está correto como está.
+  const tipoB = /mensalidade\s+de\s+parceria|servi[çc]os\s+continuados|-MENS\b/i.test(text);
+
+  const inegociaveis: [RegExp, string][] = [
+    [/confidencialidade/i, "Confidencialidade"],
+    [/dados[^.]{0,80}propriedade|propriedade[^.]{0,80}dados|prote[çc][ãa]o\s+de\s+dados|LGPD/i,
+      "Propriedade e Proteção de Dados"],
+    [/foro/i, "Foro"],
+  ];
+  if (!tipoB) {
+    inegociaveis.push([/propriedade\s+intelectual/i, "Propriedade Intelectual"]);
+  }
+
+  for (const [re, nome] of inegociaveis) {
+    if (!re.test(text)) {
+      issues.push({
+        rule: "clausula_inegociavel",
+        detail: `Falta a cláusula de ${nome}. É uma das que nunca saem sem instrução explícita.`,
+      });
+    }
+  }
+
+  // Numeração sequencial. Só os títulos contam: uma referência no corpo
+  // ("nos termos da Cláusula 3") não é uma cláusula nova, e contá-la
+  // acusaria repetição em contrato que está perfeito.
+  const titulos = Array.from(
+    text.matchAll(/^[ \t]*CL[ÁA]USULA\s+(\d+)/gm)
+  ).map((m) => Number(m[1]));
+
+  if (titulos.length > 0) {
+    const repetidos = titulos.filter((n, i) => titulos.indexOf(n) !== i);
+    if (repetidos.length > 0) {
+      issues.push({
+        rule: "numeracao",
+        detail: `Cláusula(s) numerada(s) mais de uma vez: ${Array.from(new Set(repetidos)).join(", ")}.`,
+      });
+    }
+    const ordenados = Array.from(new Set(titulos)).sort((a, b) => a - b);
+    const esperado = Array.from({ length: ordenados.length }, (_, i) => i + 1);
+    if (ordenados.join(",") !== esperado.join(",")) {
+      issues.push({
+        rule: "numeracao",
+        detail: `Numeração fora de sequência: ${ordenados.join(", ")}. Esperado 1 a ${ordenados.length}.`,
+      });
+    }
+  }
+
+  // A soma das parcelas contra o valor total. Esta é a trava que mais
+  // importa: um modelo conferindo a própria aritmética em prosa erra sem
+  // avisar, e o resultado é um documento assinável com o número errado.
+  const totalLinha = text
+    .split("\n")
+    .find((l) => /valor\s+total|total\s+d[ae]\s+implementa[çc][ãa]o/i.test(l) && /R\$/.test(l));
+  const total = totalLinha ? parseBRL(totalLinha) : null;
+
+  const multiplicadas = Array.from(text.matchAll(/(\d{1,2})\s*[x×]\s*(R\$\s*[\d.,]+)/gi));
+
+  if (total && multiplicadas.length > 0) {
+    for (const m of multiplicadas) {
+      const n = Number(m[1]);
+      const parcela = parseBRL(m[2]);
+      if (!parcela) continue;
+      const soma = n * parcela;
+      // Entrada + parcelas é o padrão da casa, então a soma das parcelas
+      // pode ficar abaixo do total. Só acusamos quando ela o ultrapassa,
+      // que é sempre erro.
+      if (soma > total + 1) {
+        issues.push({
+          rule: "aritmetica",
+          detail: `${n} × R$ ${parcela.toLocaleString("pt-BR")} = R$ ${soma.toLocaleString("pt-BR")}, que passa do valor total de R$ ${total.toLocaleString("pt-BR")}. Refaça a conta e mostre-a.`,
+        });
+      }
+    }
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
 const VALIDATORS: Record<string, (text: string) => ValidationResult> = {
   A1: validateA1,
   A2: validateA2,
   A3: validateA3,
   A4: validateA4,
   A5: validateA5,
+  A6: validateA6,
   D1: validateD1,
   D2: validateD2,
+  D3: validateD3,
 };
 
 export function validateArtifact(kind: string | null, text: string): ValidationResult {

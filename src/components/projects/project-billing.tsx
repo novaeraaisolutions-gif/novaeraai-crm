@@ -46,7 +46,9 @@ export function ProjectBilling({ project }: Props) {
   const update = useUpdateProject();
   const [open, setOpen] = useState(false);
   const [predictionOpen, setPredictionOpen] = useState(false);
-  const [predictionOverride, setPredictionOverride] = useState(project.predicted_first_billing_override ?? "");
+  const [trialStart, setTrialStart] = useState(project.trial_start_date ?? "");
+  const [trialDays, setTrialDays] = useState(String(project.trial_days ?? 30));
+  const [firstBilling, setFirstBilling] = useState(project.monthly_billing_start_date ?? "");
   const computeDurationLabel = (start: string, end: string) => {
     if (!start || !end) return "";
     const months = differenceInCalendarMonths(parseISO(end), parseISO(start));
@@ -108,16 +110,34 @@ export function ProjectBilling({ project }: Props) {
 
   const hasMensalidade = status !== "sem_mensalidade";
 
-  // Previsão da 1ª cobrança de mensalidade: por padrão, prazo de entrega
-  // (prometido, ou previsto se não houver data prometida) + 30 dias de
-  // período de teste — mas pode ser sobrescrita manualmente quando o
-  // contrato combinar um prazo diferente com o cliente.
-  const deliveryDate = project.promised_delivery_date ?? project.expected_end_date;
-  const computedPrediction = deliveryDate ? addDays(parseISO(deliveryDate), 30) : null;
-  const predictedFirstBilling = project.predicted_first_billing_override
+  // O ciclo da mensalidade, na mesma ordem que `project_first_billing_date()`
+  // usa no banco. Antes isto vivia só aqui no componente e o banco não
+  // sabia da previsão — por isso a cobrança saía no dia em que alguém
+  // abrisse o Financeiro, e não no dia combinado.
+  const dias = Number(project.trial_days ?? 30) || 30;
+  const deliveryDate = project.trial_start_date
+    ?? project.promised_delivery_date
+    ?? project.expected_end_date;
+  const computedPrediction = deliveryDate ? addDays(parseISO(deliveryDate), dias) : null;
+  const predictedFirstBilling = project.monthly_billing_start_date
+    ? parseISO(project.monthly_billing_start_date)
+    : project.predicted_first_billing_override
     ? parseISO(project.predicted_first_billing_override)
     : computedPrediction;
-  const isOverridden = !!project.predicted_first_billing_override;
+  const isOverridden =
+    !!project.monthly_billing_start_date &&
+    (!computedPrediction ||
+      project.monthly_billing_start_date !== formatDateFns(computedPrediction, "yyyy-MM-dd"));
+
+  const trialEnded = predictedFirstBilling ? predictedFirstBilling <= new Date() : false;
+  const diasDeTeste = predictedFirstBilling
+    ? differenceInDays(predictedFirstBilling, new Date())
+    : null;
+
+  // Do mês seguinte em diante vale o dia escolhido pelo cliente. Sem dia
+  // escolhido, herda o da primeira mensalidade — que é o que o banco faz.
+  const diaDoMes = project.billing_day
+    ?? (predictedFirstBilling ? predictedFirstBilling.getDate() : null);
 
   // Duração do contrato (meses), derivada de início + término — usada tanto
   // pra clientes já ativos quanto pra previsão, já que a mensalidade (ativa
@@ -127,10 +147,19 @@ export function ProjectBilling({ project }: Props) {
       ? differenceInCalendarMonths(parseISO(project.contract_end), parseISO(project.contract_start))
       : null;
 
-  const handleSavePrediction = async () => {
+  const handleSaveTrial = async () => {
+    // A data da 1ª mensalidade é gravada explicitamente, e não recalculada
+    // toda vez: mudar o prazo de entrega meses depois não pode mexer numa
+    // cobrança que já foi combinada com o cliente.
+    const calculada =
+      trialStart && Number(trialDays) > 0
+        ? formatDateFns(addDays(parseISO(trialStart), Number(trialDays)), "yyyy-MM-dd")
+        : "";
     await update.mutateAsync({
       id: project.id,
-      predicted_first_billing_override: predictionOverride || null,
+      trial_start_date: trialStart || null,
+      trial_days: Number(trialDays) > 0 ? Number(trialDays) : 30,
+      monthly_billing_start_date: firstBilling || calculada || null,
     });
     setPredictionOpen(false);
   };
@@ -168,27 +197,46 @@ export function ProjectBilling({ project }: Props) {
                   : "Não definido"
               }
             />
-            <div className="rounded-lg p-3 bg-white/5 border border-border flex items-center gap-2">
-              <CalendarClock size={14} className="text-primary flex-shrink-0" />
+            <div className="rounded-lg p-3 bg-white/5 border border-border flex items-start gap-2">
+              <CalendarClock size={14} className="text-primary flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-text-muted uppercase tracking-wider">Previsão da 1ª mensalidade</p>
+                <p className="text-[10px] text-text-muted uppercase tracking-wider">
+                  {trialEnded ? "1ª mensalidade" : "Período de teste"}
+                </p>
                 {predictedFirstBilling ? (
-                  <p className="text-sm font-semibold mt-0.5">
-                    {formatDate(predictedFirstBilling.toISOString())}
-                    <span className="block text-[10px] font-normal text-text-muted">
-                      {isOverridden ? "ajustada manualmente" : "prazo de entrega + 30 dias de teste"}
-                    </span>
-                  </p>
+                  <>
+                    <p className="text-sm font-semibold mt-0.5">
+                      {formatDate(predictedFirstBilling.toISOString())}
+                      <span className="block text-[10px] font-normal text-text-muted">
+                        {trialEnded
+                          ? isOverridden
+                            ? "definida manualmente"
+                            : "fim do período de teste"
+                          : `faltam ${diasDeTeste} dia${diasDeTeste === 1 ? "" : "s"} de teste`}
+                      </span>
+                    </p>
+                    {diaDoMes && (
+                      <p className="text-[10px] text-text-muted mt-1">
+                        Depois, todo dia {diaDoMes}
+                        {!project.billing_day && " (herdado — cliente ainda não escolheu)"}
+                      </p>
+                    )}
+                  </>
                 ) : (
-                  <p className="text-sm font-semibold mt-0.5 text-text-muted">Nenhuma previsão definida</p>
+                  <p className="text-sm font-semibold mt-0.5 text-text-muted">Teste não definido</p>
                 )}
               </div>
               <Button
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0 flex-shrink-0"
-                onClick={() => { setPredictionOverride(project.predicted_first_billing_override ?? ""); setPredictionOpen(true); }}
-                title="Definir/ajustar previsão"
+                onClick={() => {
+                  setTrialStart(project.trial_start_date ?? "");
+                  setTrialDays(String(project.trial_days ?? 30));
+                  setFirstBilling(project.monthly_billing_start_date ?? "");
+                  setPredictionOpen(true);
+                }}
+                title="Definir período de teste"
               >
                 <Pencil size={12} />
               </Button>
@@ -360,34 +408,91 @@ export function ProjectBilling({ project }: Props) {
       </Dialog>
 
       <Dialog open={predictionOpen} onOpenChange={setPredictionOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Ajustar previsão da 1ª mensalidade</DialogTitle>
+            <DialogTitle>Período de teste e 1ª mensalidade</DialogTitle>
             <DialogDescription>
-              Por padrão é calculada como prazo de entrega + 30 dias de teste. Defina uma data aqui se o contrato combinar um prazo diferente.
+              O cliente ganha os dias de teste a partir da entrega. Quando eles
+              acabam, paga a primeira mensalidade — e do mês seguinte em diante,
+              no dia que ele escolheu.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-1.5">
-            <Label>Data prevista</Label>
-            <Input type="date" value={predictionOverride} onChange={(e) => setPredictionOverride(e.target.value)} />
-            {computedPrediction && (
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Entrega da solução</Label>
+                <Input
+                  type="date"
+                  value={trialStart}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTrialStart(v);
+                    // Recalcula enquanto a pessoa mexe. Uma vez salva, a data
+                    // fica gravada e não se move sozinha depois.
+                    if (v && Number(trialDays) > 0) {
+                      setFirstBilling(
+                        formatDateFns(addDays(parseISO(v), Number(trialDays)), "yyyy-MM-dd")
+                      );
+                    }
+                  }}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Dias de teste</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={trialDays}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTrialDays(v);
+                    if (trialStart && Number(v) > 0) {
+                      setFirstBilling(
+                        formatDateFns(addDays(parseISO(trialStart), Number(v)), "yyyy-MM-dd")
+                      );
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Data da 1ª mensalidade</Label>
+              <Input
+                type="date"
+                value={firstBilling}
+                onChange={(e) => setFirstBilling(e.target.value)}
+              />
               <p className="text-[11px] text-text-muted">
-                Cálculo automático: {formatDate(computedPrediction.toISOString())}
+                Calculada a partir da entrega mais os dias de teste. Ajuste aqui
+                se o contrato combinou outra data — é esta que gera a cobrança.
               </p>
+            </div>
+
+            {firstBilling && (
+              <div className="rounded-lg p-3 bg-white/5 border border-border space-y-1">
+                <p className="text-[10px] text-text-muted uppercase tracking-wider">
+                  Como vai cobrar
+                </p>
+                <p className="text-[12px] text-text-secondary">
+                  1ª em <b className="text-text-primary">{formatDate(firstBilling)}</b>
+                  {project.billing_day ? (
+                    <> · depois todo dia <b className="text-text-primary">{project.billing_day}</b></>
+                  ) : (
+                    <> · depois todo dia <b className="text-text-primary">{parseISO(firstBilling).getDate()}</b>, até o cliente escolher outro em Configurar</>
+                  )}
+                </p>
+                <p className="text-[11px] text-text-muted">
+                  Durante o teste nenhuma receita é gerada.
+                </p>
+              </div>
             )}
           </div>
+
           <DialogFooter>
-            {isOverridden && (
-              <Button
-                variant="outline"
-                className="mr-auto text-text-muted"
-                onClick={() => { setPredictionOverride(""); }}
-              >
-                Voltar ao automático
-              </Button>
-            )}
             <Button variant="outline" onClick={() => setPredictionOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSavePrediction} style={{ background: "var(--primary)" }} disabled={update.isPending}>
+            <Button onClick={handleSaveTrial} style={{ background: "var(--primary)" }} disabled={update.isPending}>
               Salvar
             </Button>
           </DialogFooter>

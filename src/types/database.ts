@@ -278,6 +278,8 @@ export interface Database {
           implementation_notes: string | null;
           // V2: pós-entrega/mensalidade
           monthly_billing_start_date: string | null;
+          trial_start_date: string | null;
+          trial_days: number;
           latest_nps_score: number | null;
           latest_nps_date: string | null;
           latest_meeting_date: string | null;
@@ -299,7 +301,7 @@ export interface Database {
         };
         // progress e tags têm DEFAULT no banco (0 e '{}'), então são
         // opcionais na inserção — o tipo é que os exigia.
-        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["projects"]["Row"], "id" | "created_at" | "updated_at" | "auto_created_from_lead" | "lead_win_notice_dismissed" | "progress" | "tags">> & { auto_created_from_lead?: boolean; lead_win_notice_dismissed?: boolean; progress?: number; tags?: string[] };
+        Insert: NullableToOptional<Omit<Database["public"]["Tables"]["projects"]["Row"], "id" | "created_at" | "updated_at" | "auto_created_from_lead" | "lead_win_notice_dismissed" | "progress" | "tags" | "trial_days">> & { auto_created_from_lead?: boolean; lead_win_notice_dismissed?: boolean; progress?: number; tags?: string[]; trial_days?: number };
         Update: Partial<Database["public"]["Tables"]["projects"]["Insert"]>;
         Relationships: [];
       };

@@ -4,6 +4,10 @@ Contratos reais, do jeito que foram assinados. Servem como referência de
 **redação e nível de detalhe** — nunca como molde para copiar escopo,
 valor ou prazo de um cliente para outro.
 
+**O CNPJ da Nova Era nestes três contratos (`59.305.580/0001-78`) não é o
+vigente.** O correto é `40.644.314/0001-41`, conforme `NE-CONTRATOS-PADRAO`.
+Nunca copie o CNPJ daqui.
+
 Cada cliente tem o escopo dele. O que se reaproveita daqui é a forma:
 como uma cláusula é escrita, quanto detalhe um módulo carrega, como uma
 tabela de parcelas é montada.

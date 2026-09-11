@@ -9,16 +9,14 @@ contra os três contratos assinados.
 
 ## Dados fixos da Contratada
 
-**Nova Era AI** · CNPJ **59.305.580/0001-78** · Uberlândia — Minas Gerais
+**Nova Era AI** · CNPJ **40.644.314/0001-41** · Uberlândia — Minas Gerais
 Representante: **Gustavo Henrique de Vasconcelos e Silva** (CEO).
 
-Este CNPJ é o que consta nos contratos Trietel e Áurea Imóveis, assinados.
+CNPJ confirmado pela diretoria em 11/09/2026.
 
-`[CONFIRMAR]` O prompt original do assistente trazia o CNPJ
-`40.644.314/0001-41`, que não aparece em nenhum dos três contratos reais.
-Um dos dois está errado, e um contrato com CNPJ errado é um problema
-jurídico, não um erro de digitação. Enquanto não for confirmado pela
-diretoria, use o desta seção e sinalize no fechamento.
+**Atenção:** os três contratos-modelo (Trietel, Áurea, Auto Marcas) trazem
+o CNPJ `59.305.580/0001-78`. Ao reaproveitar texto desses modelos, **nunca
+copie o CNPJ deles** — use sempre o desta seção.
 
 `[FALTA]` Grafia oficial única. Os modelos alternam entre "NovaEra AI"
 (29 ocorrências), "Nova Era AI" (23) e "Nova Era". O padrão adotado aqui é

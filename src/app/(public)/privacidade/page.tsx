@@ -29,7 +29,7 @@ export default function PrivacidadePage() {
       <Secao titulo="Do que trata este documento">
         <p>
           O CRM da Nova Era AI é um sistema <strong>de uso interno</strong> da Nova
-          Era AI (CNPJ 59.305.580/0001-78, Uberlândia — MG). Ele não é oferecido ao
+          Era AI (CNPJ 40.644.314/0001-41, Uberlândia — MG). Ele não é oferecido ao
           público: o acesso é criado pela própria empresa para seus sócios e
           colaboradores.
         </p>
@@ -178,7 +178,7 @@ export default function PrivacidadePage() {
 
       <Secao titulo="Contato">
         <p>
-          Nova Era AI · CNPJ 59.305.580/0001-78 · Uberlândia — Minas Gerais
+          Nova Era AI · CNPJ 40.644.314/0001-41 · Uberlândia — Minas Gerais
           <br />
           <a href="mailto:contato@novaeraai.com.br" style={{ color: "#0CA8F5" }}>
             contato@novaeraai.com.br

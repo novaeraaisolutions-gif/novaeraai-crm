@@ -15,8 +15,9 @@ Representante: **Gustavo Henrique de Vasconcelos e Silva** (CEO).
 CNPJ confirmado pela diretoria em 11/09/2026.
 
 **Atenção:** os três contratos-modelo (Trietel, Áurea, Auto Marcas) trazem
-o CNPJ `59.305.580/0001-78`. Ao reaproveitar texto desses modelos, **nunca
-copie o CNPJ deles** — use sempre o desta seção.
+o CNPJ `59.305.580/0001-78`, anterior à transferência de CNPJ da empresa.
+Ao reaproveitar texto desses modelos, **nunca copie o CNPJ deles** — use
+sempre o desta seção.
 
 `[FALTA]` Grafia oficial única. Os modelos alternam entre "NovaEra AI"
 (29 ocorrências), "Nova Era AI" (23) e "Nova Era". O padrão adotado aqui é
